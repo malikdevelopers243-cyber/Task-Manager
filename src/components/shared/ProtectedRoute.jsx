@@ -1,6 +1,33 @@
-const ProtectedRoute = ({ children, role, allowedRole = 'admin' }) => {
-  if (role !== allowedRole) {
-    return <p className="text-sm text-amber-600">You do not have access to this section.</p>
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+
+const getStoredUser = () => {
+  const raw = localStorage.getItem('office-management-current-user')
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    localStorage.removeItem('office-management-current-user')
+    return null
+  }
+}
+
+const ProtectedRoute = ({ children, allowedRole }) => {
+  const { currentUser, userRole, loading } = useAuth()
+  const storedUser = getStoredUser()
+  const activeUser = currentUser || storedUser
+  const activeRole = userRole || storedUser?.role
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-700">
+        Loading...
+      </div>
+    )
+  }
+
+  if (!activeUser || activeRole !== allowedRole) {
+    return <Navigate to="/login" replace />
   }
 
   return children

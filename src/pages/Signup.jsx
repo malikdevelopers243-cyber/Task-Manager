@@ -1,57 +1,50 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import logoImage from '../assets/images/main photo.png'
 import Spinner from '../components/shared/Spinner'
 
-const Login = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState('employee')
+const Signup = () => {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'employee',
+    department: '',
+  })
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { register } = useAuth()
   const navigate = useNavigate()
+
+  const isFormValid = useMemo(
+    () => form.name && form.email && form.password && form.role,
+    [form],
+  )
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setLoading(true)
 
-    if (!email || !password) {
-      toast.error('Email and password are required.')
-      setLoading(false)
-      return
-    }
-
-    if (!role) {
-      toast.error('Please select a role.')
-      setLoading(false)
-      return
-    }
-
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailPattern.test(email)) {
+    if (!emailPattern.test(form.email)) {
       toast.error('Please enter a valid email address.')
       setLoading(false)
       return
     }
 
-    try {
-      const user = await login(email, password)
+    if (!isFormValid) {
+      toast.error('Please fill out all required fields.')
+      setLoading(false)
+      return
+    }
 
-      if (!user || !user.role) {
-        toast.error('Role not found for this user.')
-      } else if (user.role !== role) {
-        toast.error(`Please login as ${user.role}.`)
-      } else if (user.role === 'admin') {
-        navigate('/admin/dashboard')
-      } else if (user.role === 'employee') {
-        navigate('/employee/dashboard')
-      } else {
-        toast.error('Invalid user role.')
-      }
+    try {
+      await register(form)
+      toast.success('Signup successful. Please login.')
+      navigate('/login')
     } catch (error) {
-      toast.error(error.message || 'Invalid email or password.')
+      toast.error(error.message || 'Unable to register.')
     } finally {
       setLoading(false)
     }
@@ -67,17 +60,28 @@ const Login = () => {
             alt="Office Management logo"
             className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
           />
-          <h1 className="text-3xl font-bold text-slate-900">Office Management</h1>
-          <p className="mt-2 text-sm text-slate-500">Sign in with your company credentials.</p>
+          <h1 className="text-3xl font-bold text-slate-900">Create Account</h1>
+          <p className="mt-2 text-sm text-slate-500">Sign up as an admin or employee.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Full Name</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+            />
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             />
@@ -87,8 +91,8 @@ const Login = () => {
             <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             />
@@ -97,13 +101,23 @@ const Login = () => {
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             >
               <option value="employee">Employee</option>
               <option value="admin">Admin</option>
             </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Department</label>
+            <input
+              type="text"
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+            />
           </div>
 
           <button
@@ -113,18 +127,18 @@ const Login = () => {
           >
             {loading ? (
               <span className="inline-flex items-center justify-center gap-2">
-                <Spinner className="h-4 w-4" color="border-white" /> Signing in...
+                <Spinner className="h-4 w-4" color="border-white" /> Signing up...
               </span>
             ) : (
-              'Log in'
+              'Sign up'
             )}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-semibold text-sky-600 hover:text-sky-700">
-            Sign up
+          Already have an account?{' '}
+          <Link to="/login" className="font-semibold text-sky-600 hover:text-sky-700">
+            Log in
           </Link>
         </div>
       </div>
@@ -132,4 +146,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default Signup
