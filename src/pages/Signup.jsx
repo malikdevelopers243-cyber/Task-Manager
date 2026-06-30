@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
@@ -11,17 +11,11 @@ const Signup = () => {
     name: '',
     email: '',
     password: '',
-    role: 'employee',
     department: '',
   })
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
-
-  const isFormValid = useMemo(
-    () => form.username && form.name && form.email && form.password && form.role,
-    [form],
-  )
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -40,15 +34,15 @@ const Signup = () => {
       return
     }
 
-    if (!isFormValid) {
+    if (!form.username || !form.name || !form.email || !form.password) {
       toast.error('Please fill out all required fields.')
       setLoading(false)
       return
     }
 
     try {
-      await register(form)
-      toast.success('Signup successful. Please login.')
+      await register({ ...form, role: 'admin' })
+      toast.success('Admin account created. Please login.')
       navigate('/login')
     } catch (error) {
       toast.error(error.message || 'Unable to register.')
@@ -67,8 +61,8 @@ const Signup = () => {
             alt="Office Management logo"
             className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
           />
-          <h1 className="text-3xl font-bold text-slate-900">Create Account</h1>
-          <p className="mt-2 text-sm text-slate-500">Sign up as an admin or employee.</p>
+          <h1 className="text-3xl font-bold text-slate-900">Create Admin Account</h1>
+          <p className="mt-2 text-sm text-slate-500">Create the initial admin for the system.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -117,18 +111,6 @@ const Signup = () => {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
-            >
-              <option value="employee">Employee</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Department</label>
             <input
               type="text"
@@ -148,7 +130,7 @@ const Signup = () => {
                 <Spinner className="h-4 w-4" color="border-white" /> Signing up...
               </span>
             ) : (
-              'Sign up'
+              'Create Admin'
             )}
           </button>
         </form>

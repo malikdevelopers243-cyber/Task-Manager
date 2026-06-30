@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     return authUser
   }
 
-  const register = async ({ username, name, email, password, role = 'employee', department = '' }) => {
+  const register = async ({ username, name, email, password, role = 'employee', department = '', contact = '' }) => {
     const lowerEmail = email.toLowerCase()
     const lowerUsername = username.trim().toLowerCase()
     const existingEmailUser = allUsers.find((user) => user.email.toLowerCase() === lowerEmail)
@@ -157,6 +157,7 @@ export const AuthProvider = ({ children }) => {
       password,
       role,
       department,
+      contact,
       profilePicture: null,
     }
 
@@ -175,6 +176,7 @@ export const AuthProvider = ({ children }) => {
         password: newUser.password,
         department: newUser.department || '',
         role: newUser.role || 'employee',
+        contact: newUser.contact || '',
         isActive: true,
         joiningDate: new Date().toISOString().split('T')[0],
       }

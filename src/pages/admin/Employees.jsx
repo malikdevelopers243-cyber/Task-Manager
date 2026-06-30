@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import Navbar from '../../components/shared/Navbar'
 import AdminSidebar from '../../components/shared/AdminSidebar'
 import MobileSidebar from '../../components/shared/MobileSidebar'
@@ -39,6 +39,7 @@ const initialForm = {
   password: '',
   department: 'Engineering',
   role: 'employee',
+  contact: '',
 }
 
 const saveEmployees = (employees) => {
@@ -83,6 +84,12 @@ const Employees = () => {
     [],
   )
 
+  const roleOptions = useMemo(() => [
+    { label: 'Super Admin', value: 'superadmin' },
+    { label: 'Manager', value: 'manager' },
+    { label: 'Employee', value: 'employee' },
+  ], [])
+
   const handleCreateEmployee = async (event) => {
     event.preventDefault()
     if (!form.name || !form.email || !form.password) {
@@ -108,6 +115,7 @@ const Employees = () => {
         password: form.password,
         role: form.role,
         department: form.department,
+        contact: form.contact,
       })
 
       const newEmployee = {
@@ -117,6 +125,7 @@ const Employees = () => {
         password: newUser.password,
         department: newUser.department,
         role: newUser.role,
+        contact: newUser.contact || '',
         isActive: true,
         joiningDate: new Date().toISOString().split('T')[0],
       }
@@ -126,8 +135,18 @@ const Employees = () => {
       setEmployees(nextEmployees)
       setForm(initialForm)
       setModalOpen(false)
-      toast.success('Employee added successfully. Employee can now login.')
+      // Confirm localStorage write
+      try {
+        const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY) || '[]'
+        const list = JSON.parse(raw)
+        toast.success(`Employee added — ${list.length} total.`)
+        console.info('Employees list after add:', list)
+      } catch (e) {
+        console.error('Unable to read employees from localStorage after add', e)
+        toast.success('Employee added successfully. Employee can now login.')
+      }
     } catch (error) {
+      console.error('Add employee failed', error)
       toast.error(error.message || 'Unable to add employee.')
     } finally {
       setSaving(false)
@@ -166,6 +185,7 @@ const Employees = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
+      <Toaster position="top-center" />
       <div className="flex flex-col gap-6 p-6 md:flex-row md:items-start">
         <div className="md:hidden">
           <MobileSidebar role="admin" />
@@ -192,6 +212,7 @@ const Employees = () => {
                   <tr>
                     <th className="px-6 py-4 text-left font-semibold text-slate-500">Name</th>
                     <th className="px-6 py-4 text-left font-semibold text-slate-500">Email</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Contact</th>
                     <th className="px-6 py-4 text-left font-semibold text-slate-500">Department</th>
                     <th className="px-6 py-4 text-left font-semibold text-slate-500">Role</th>
                     <th className="px-6 py-4 text-left font-semibold text-slate-500">Status</th>
@@ -202,13 +223,13 @@ const Employees = () => {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {loading ? (
                     <>
-                      <SkeletonRow columns={7} />
-                      <SkeletonRow columns={7} />
-                      <SkeletonRow columns={7} />
+                      <SkeletonRow columns={8} />
+                      <SkeletonRow columns={8} />
+                      <SkeletonRow columns={8} />
                     </>
                   ) : employees.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8">
+                      <td colSpan={8} className="px-6 py-8">
                         <EmptyState message="No employees found." />
                       </td>
                     </tr>
@@ -217,6 +238,7 @@ const Employees = () => {
                       <tr key={employee.id}>
                         <td className="px-6 py-4 text-slate-700">{employee.name}</td>
                         <td className="px-6 py-4 text-slate-700">{employee.email}</td>
+                        <td className="px-6 py-4 text-slate-700">{employee.contact || '-'}</td>
                         <td className="px-6 py-4 text-slate-700">{employee.department}</td>
                         <td className="px-6 py-4 text-slate-700 capitalize">{employee.role}</td>
                         <td className="px-6 py-4">
@@ -326,17 +348,28 @@ const Employees = () => {
                     </label>
                   </div>
 
-                  <label className="block text-sm text-slate-700">
-                    Role
-                    <select
-                      value={form.role}
-                      onChange={(e) => setForm({ ...form, role: e.target.value })}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-                    >
-                      <option value="employee">Employee</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </label>
+                    <label className="block text-sm text-slate-700">
+                      Role
+                      <select
+                        value={form.role}
+                        onChange={(e) => setForm({ ...form, role: e.target.value })}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                      >
+                        {roleOptions.map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block text-sm text-slate-700">
+                      Contact Number
+                      <input
+                        type="tel"
+                        value={form.contact}
+                        onChange={(e) => setForm({ ...form, contact: e.target.value })}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                      />
+                    </label>
 
                   <button
                     type="submit"

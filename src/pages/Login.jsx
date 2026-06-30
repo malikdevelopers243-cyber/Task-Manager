@@ -8,7 +8,6 @@ import Spinner from '../components/shared/Spinner'
 const Login = () => {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('employee')
   const [loading, setLoading] = useState(false)
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
@@ -23,25 +22,15 @@ const Login = () => {
       return
     }
 
-    if (!role) {
-      toast.error('Please select a role.')
-      setLoading(false)
-      return
-    }
-
     try {
       const user = await login(identifier, password)
 
       if (!user || !user.role) {
         toast.error('Role not found for this user.')
-      } else if (user.role !== role) {
-        toast.error(`Please login as ${user.role}.`)
       } else if (user.role === 'admin') {
         navigate('/admin/dashboard')
-      } else if (user.role === 'employee') {
-        navigate('/employee/dashboard')
       } else {
-        toast.error('Invalid user role.')
+        navigate('/employee/dashboard')
       }
     } catch (error) {
       toast.error(error.message || 'Invalid email or password.')
@@ -87,17 +76,7 @@ const Login = () => {
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
-            >
-              <option value="employee">Employee</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          {/* Login accepts username/email + password. Role is determined from account. */}
 
           <button
             type="submit"
