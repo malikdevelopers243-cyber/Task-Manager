@@ -6,19 +6,19 @@ import logoImage from '../assets/images/main photo.png'
 import Spinner from '../components/shared/Spinner'
 
 const Login = () => {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('employee')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setLoading(true)
 
-    if (!email || !password) {
-      toast.error('Email and password are required.')
+    if (!identifier || !password) {
+      toast.error('Username or email and password are required.')
       setLoading(false)
       return
     }
@@ -29,15 +29,8 @@ const Login = () => {
       return
     }
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailPattern.test(email)) {
-      toast.error('Please enter a valid email address.')
-      setLoading(false)
-      return
-    }
-
     try {
-      const user = await login(email, password)
+      const user = await login(identifier, password)
 
       if (!user || !user.role) {
         toast.error('Role not found for this user.')
@@ -73,11 +66,11 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Username or Email</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             />
@@ -118,6 +111,29 @@ const Login = () => {
             ) : (
               'Log in'
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              setLoading(true)
+              try {
+                const user = await loginWithGoogle()
+                if (user.role === 'admin') {
+                  navigate('/admin/dashboard')
+                } else {
+                  navigate('/employee/dashboard')
+                }
+              } catch (error) {
+                toast.error(error.message || 'Google sign-in failed.')
+              } finally {
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Continue with Google
           </button>
         </form>
 

@@ -54,8 +54,8 @@ const Sidebar = ({ role = 'admin' }) => {
   }
 
   return (
-    <aside className="hidden min-h-screen w-72 border-r border-slate-200 bg-slate-950 p-6 text-slate-100 md:flex md:flex-col">
-      <div className="mb-10 flex items-center gap-3 rounded-3xl bg-slate-900 p-4 shadow-sm">
+    <aside className="hidden min-h-screen w-72 border-r border-slate-200 bg-slate-950 p-6 text-slate-100 md:flex md:flex-col md:sticky md:top-0 md:h-screen">
+      <div className="mb-8 flex flex-col gap-4 rounded-3xl bg-slate-900 p-4 shadow-sm sm:flex-row sm:items-center">
         <div className="relative">
           <button
             type="button"

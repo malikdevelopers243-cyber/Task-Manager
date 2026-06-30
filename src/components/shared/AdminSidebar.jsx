@@ -1,4 +1,5 @@
-import { LogOut, LayoutDashboard, Users, ClipboardList, FileText } from 'lucide-react'
+import { useRef } from 'react'
+import { LogOut, LayoutDashboard, Users, ClipboardList, FileText, Plus } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -10,9 +11,16 @@ const links = [
 ]
 
 const AdminSidebar = () => {
-  const { currentUser, logout } = useAuth()
+  const { currentUser, logout, updateProfilePicture } = useAuth()
   const navigate = useNavigate()
-  const initials = currentUser?.email
+  const fileInputRef = useRef(null)
+  const initials = currentUser?.name
+    ? currentUser.name
+        .split(' ')
+        .map((segment) => segment[0]?.toUpperCase())
+        .join('')
+        .slice(0, 2)
+    : currentUser?.email
     ? currentUser.email
         .split('@')[0]
         .split(/[._-]/)
@@ -21,20 +29,68 @@ const AdminSidebar = () => {
         .slice(0, 2)
     : 'AD'
 
+  const profileName = currentUser?.name || currentUser?.displayName || 'Admin'
+
   const handleLogout = async () => {
     await logout()
     navigate('/login')
   }
 
+  const handleProfileSelect = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleProfileChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (loadEvent) => {
+      const imageUrl = loadEvent.target?.result
+      if (typeof imageUrl === 'string') {
+        await updateProfilePicture(imageUrl)
+      }
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
+
   return (
     <aside className="hidden min-h-screen w-72 flex-col gap-8 bg-[#1e3a5f] p-6 text-white md:flex">
-      <div className="flex items-center gap-3 rounded-3xl bg-white/10 p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-lg font-semibold text-[#1e3a5f]">
-          {initials}
+      <div className="mb-6 flex items-center gap-3 rounded-3xl bg-white/10 p-4 shadow-sm">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={handleProfileSelect}
+            className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-semibold text-[#1e3a5f] transition hover:border-sky-400"
+            aria-label="Upload profile picture"
+          >
+            {currentUser?.profilePicture ? (
+              <img
+                src={currentUser.profilePicture}
+                alt="Admin"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center bg-slate-100 text-2xl font-semibold text-[#1e3a5f]">
+                {initials}
+              </span>
+            )}
+            <span className="absolute -right-1 -bottom-1 flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white shadow-lg">
+              <Plus className="h-4 w-4" />
+            </span>
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleProfileChange}
+          />
         </div>
         <div>
           <p className="text-sm text-slate-200">Admin</p>
-          <p className="font-semibold text-white">{currentUser?.email || 'Admin'}</p>
+          <p className="text-base font-semibold text-white">{profileName}</p>
         </div>
       </div>
 

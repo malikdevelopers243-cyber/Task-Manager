@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import Navbar from '../../components/shared/Navbar'
 import Sidebar from '../../components/shared/Sidebar'
+import MobileSidebar from '../../components/shared/MobileSidebar'
 import { useAuth } from '../../hooks/useAuth'
 import { getAttendanceByEmployee, saveAttendance, updateAttendance, saveEODReport } from '../../firebase/firestore'
 
@@ -36,6 +37,14 @@ const calculateBreakMinutes = (breaks) => {
   }, 0)
 }
 
+const parseFirestoreDate = (value) => {
+  if (!value) return null
+  if (value instanceof Date) return value
+  if (typeof value.toDate === 'function') return value.toDate()
+  if (typeof value.seconds === 'number') return new Date(value.seconds * 1000)
+  return new Date(value)
+}
+
 const formatDuration = (ms) => {
   const minutes = Math.round(ms / 60000)
   const hours = Math.floor(minutes / 60)
@@ -55,7 +64,10 @@ const Dashboard = () => {
   const [scrum, setScrum] = useState({ completed: '', tomorrow: '', blockers: '' })
   const [scrumSubmitted, setScrumSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [savingBreak, setSavingBreak] = useState(false)
+  const [savingScrum, setSavingScrum] = useState(false)
+  const [savingCheckout, setSavingCheckout] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -77,13 +89,13 @@ const Dashboard = () => {
         if (todayRecord) {
           setAttendance(todayRecord)
           setAttendanceId(todayRecord.id)
-          setCheckedInAt(todayRecord.checkIn ? new Date(todayRecord.checkIn.seconds * 1000) : null)
-          setCheckedOutAt(todayRecord.checkOut ? new Date(todayRecord.checkOut.seconds * 1000) : null)
+          setCheckedInAt(parseFirestoreDate(todayRecord.checkIn))
+          setCheckedOutAt(parseFirestoreDate(todayRecord.checkOut))
           setBreaks(
             Array.isArray(todayRecord.breaks)
               ? todayRecord.breaks.map((item) => ({
-                  start: item.start ? new Date(item.start.seconds * 1000) : null,
-                  end: item.end ? new Date(item.end.seconds * 1000) : null,
+                  start: parseFirestoreDate(item.start),
+                  end: parseFirestoreDate(item.end),
                 }))
               : [],
           )
@@ -109,12 +121,15 @@ const Dashboard = () => {
   const hasCheckedOut = Boolean(checkedOutAt)
   const canTakeBreak = hasCheckedIn && !hasCheckedOut
   const canSubmitScrum = hasCheckedIn && !hasCheckedOut
-  const canCheckout = scrumSubmitted && hasCheckedIn && !hasCheckedOut
+  const canCheckout = hasCheckedIn && !hasCheckedOut
 
   const handleCheckIn = async () => {
     if (!currentUser) return
-    setSaving(true)
     const timestamp = new Date()
+    setCheckedInAt(timestamp)
+    setAttendanceId('pending')
+    setCheckingIn(true)
+    toast.success(`Checked in at ${formatTime(timestamp)}`)
 
     try {
       const result = await saveAttendance({
@@ -128,13 +143,13 @@ const Dashboard = () => {
       })
 
       setAttendanceId(result.id)
-      setCheckedInAt(timestamp)
       setBreaks([])
-      toast.success(`Checked in at ${formatTime(timestamp)}`)
     } catch (error) {
+      setCheckedInAt(null)
+      setAttendanceId(null)
       toast.error('Check-in failed. Try again.')
     } finally {
-      setSaving(false)
+      setCheckingIn(false)
     }
   }
 
@@ -146,10 +161,14 @@ const Dashboard = () => {
 
   const handleEndBreak = async () => {
     if (!activeBreakStart || !attendanceId) return
-    setSaving(true)
+    setSavingBreak(true)
     const breakEnd = new Date()
     const newBreak = { start: activeBreakStart, end: breakEnd }
     const updatedBreaks = [...breaks, newBreak]
+
+    setBreaks(updatedBreaks)
+    setActiveBreakStart(null)
+    toast.success(`Break ended (${formatDuration(breakEnd - activeBreakStart)})`)
 
     try {
       await updateAttendance(attendanceId, {
@@ -158,13 +177,11 @@ const Dashboard = () => {
           end: item.end,
         })),
       })
-      setBreaks(updatedBreaks)
-      setActiveBreakStart(null)
-      toast.success(`Break ended (${formatDuration(breakEnd - activeBreakStart)})`)
     } catch (error) {
+      setBreaks(breaks)
       toast.error('Unable to end break.')
     } finally {
-      setSaving(false)
+      setSavingBreak(false)
     }
   }
 
@@ -177,7 +194,9 @@ const Dashboard = () => {
       return
     }
 
-    setSaving(true)
+    setScrumSubmitted(true)
+    setSavingScrum(true)
+    toast.success('Scrum report submitted.')
 
     try {
       await saveEODReport({
@@ -188,18 +207,20 @@ const Dashboard = () => {
         tomorrow: scrum.tomorrow,
         blockers: scrum.blockers,
       })
-      setScrumSubmitted(true)
-      toast.success('Scrum report submitted.')
+
+      if (attendanceId) {
+        await updateAttendance(attendanceId, { scrumSubmitted: true })
+      }
     } catch (error) {
+      setScrumSubmitted(false)
       toast.error('Unable to submit scrum report.')
     } finally {
-      setSaving(false)
+      setSavingScrum(false)
     }
   }
 
   const handleCheckout = async () => {
     if (!attendanceId || !checkedInAt) return
-    setSaving(true)
     const checkOutTime = new Date()
     const totalDuration = checkOutTime - checkedInAt
     const breakDurationMs = calculateBreakMinutes(
@@ -210,17 +231,20 @@ const Dashboard = () => {
     )
     const totalHours = Number(((totalDuration - breakDurationMs) / 3600000).toFixed(2))
 
+    setCheckedOutAt(checkOutTime)
+    setSavingCheckout(true)
+    toast.success(`Checked out at ${formatTime(checkOutTime)}`)
+
     try {
       await updateAttendance(attendanceId, {
         checkOut: checkOutTime,
         totalHours,
       })
-      setCheckedOutAt(checkOutTime)
-      toast.success(`Checked out at ${formatTime(checkOutTime)}`)
     } catch (error) {
+      setCheckedOutAt(null)
       toast.error('Checkout failed.')
     } finally {
-      setSaving(false)
+      setSavingCheckout(false)
     }
   }
 
@@ -230,17 +254,21 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <div className="flex">
+      <div className="flex flex-col gap-6 md:flex-row">
+        <div className="md:hidden">
+          <MobileSidebar role="employee" />
+        </div>
+
         <Sidebar role="employee" />
 
-        <main className="flex-1 p-6">
+        <main className="flex-1 min-w-0 p-4 md:p-6">
           <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-sky-600">Employee dashboard</p>
               <h1 className="mt-2 text-3xl font-semibold text-slate-900">{formatDate(now)}</h1>
               <p className="mt-1 text-lg text-slate-600">Current time: {formatTime(now)}</p>
             </div>
-            <div className="rounded-3xl bg-sky-50 px-5 py-4 text-right">
+            <div className="rounded-3xl bg-sky-50 px-5 py-4 text-left md:text-right">
               <p className="text-sm text-slate-500">Hello</p>
               <p className="mt-2 text-xl font-semibold text-slate-900">{employeeName}</p>
               <p className="mt-1 text-sm text-slate-500">{checkedInText}</p>
@@ -248,16 +276,16 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-slate-900">Check-In</h2>
               <p className="mt-2 text-sm text-slate-500">Start your workday attendance.</p>
               <button
                 onClick={handleCheckIn}
-                disabled={Boolean(checkedInAt) || saving}
+                disabled={Boolean(checkedInAt) || checkingIn}
                 className="mt-6 w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {checkedInAt ? 'Checked In' : 'Check In'}
+                {checkedInAt ? 'Checked In' : checkingIn ? 'Checking in...' : 'Check In'}
               </button>
             </section>
 
@@ -266,10 +294,10 @@ const Dashboard = () => {
               <p className="mt-2 text-sm text-slate-500">Track your break time while you work.</p>
               <button
                 onClick={activeBreakStart ? handleEndBreak : handleStartBreak}
-                disabled={!canTakeBreak || saving}
+                disabled={!canTakeBreak || savingBreak}
                 className="mt-6 w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {activeBreakStart ? 'End Break' : 'Start Break'}
+                {activeBreakStart ? (savingBreak ? 'Ending break...' : 'End Break') : 'Start Break'}
               </button>
               <div className="mt-4 space-y-2 text-sm text-slate-600">
                 {activeBreakStart && <p>Break started at {formatTime(activeBreakStart)}</p>}
@@ -295,11 +323,14 @@ const Dashboard = () => {
               <p className="mt-2 text-sm text-slate-500">Submit your scrum report before you finish the day.</p>
               <button
                 onClick={handleCheckout}
-                disabled={!canCheckout || saving}
+                disabled={!canCheckout || savingCheckout}
                 className="mt-6 w-full rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {hasCheckedOut ? 'Checked Out' : 'Check Out'}
+                {savingCheckout ? 'Checking out...' : hasCheckedOut ? 'Checked Out' : 'Check Out'}
               </button>
+              {!scrumSubmitted && hasCheckedIn && !hasCheckedOut && (
+                <p className="mt-3 text-sm text-amber-600">Scrum report is recommended before checkout.</p>
+              )}
             </section>
           </div>
 
@@ -341,7 +372,7 @@ const Dashboard = () => {
               </div>
               <button
                 type="submit"
-                disabled={!canSubmitScrum || hasCheckedOut || saving}
+                disabled={!canSubmitScrum || hasCheckedOut || scrumSubmitted}
                 className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {scrumSubmitted ? 'Scrum Submitted' : 'Submit Scrum Report'}

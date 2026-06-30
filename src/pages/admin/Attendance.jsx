@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Navbar from '../../components/shared/Navbar'
 import AdminSidebar from '../../components/shared/AdminSidebar'
 import MobileSidebar from '../../components/shared/MobileSidebar'
@@ -64,6 +65,12 @@ const Attendance = () => {
 
   useEffect(() => {
     setLoading(true)
+    const location = window.location
+    try {
+      const params = new URLSearchParams(location.search)
+      const employeeParam = params.get('employee')
+      if (employeeParam) setSearch(employeeParam)
+    } catch (e) {}
     const todayEmployees = loadEmployees()
     const storedAttendance = loadAttendance()
     setEmployees(todayEmployees)

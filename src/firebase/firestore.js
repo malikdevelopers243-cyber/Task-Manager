@@ -82,6 +82,17 @@ export const saveAttendance = async (attendanceData) => {
     totalHours: attendanceData.totalHours || 0,
     createdAt: serverTimestamp(),
   })
+  // Also persist a local copy for admin UI that reads localStorage
+  try {
+    const key = 'attendance'
+    const raw = localStorage.getItem(key)
+    const existing = raw ? JSON.parse(raw) : []
+    const entry = { id: attendanceRef.id, ...attendanceData }
+    const next = [...existing, entry]
+    localStorage.setItem(key, JSON.stringify(next))
+  } catch (err) {
+    // ignore local storage errors
+  }
 
   return { id: attendanceRef.id, ...attendanceData }
 }
@@ -89,6 +100,17 @@ export const saveAttendance = async (attendanceData) => {
 export const updateAttendance = async (attendanceId, updates) => {
   const attendanceRef = doc(attendanceCollection, attendanceId)
   await setDoc(attendanceRef, updates, { merge: true })
+  // Also update localStorage copy used by admin UI
+  try {
+    const key = 'attendance'
+    const raw = localStorage.getItem(key)
+    const existing = raw ? JSON.parse(raw) : []
+    const next = existing.map((item) => (item.id === attendanceId ? { ...item, ...updates } : item))
+    localStorage.setItem(key, JSON.stringify(next))
+  } catch (err) {
+    // ignore
+  }
+
   return { id: attendanceId, ...updates }
 }
 

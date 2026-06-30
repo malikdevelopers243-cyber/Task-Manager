@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Navbar from '../../components/shared/Navbar'
 import AdminSidebar from '../../components/shared/AdminSidebar'
 import MobileSidebar from '../../components/shared/MobileSidebar'
 import EmptyState from '../../components/shared/EmptyState'
 import SkeletonRow from '../../components/shared/SkeletonRow'
+import { useAuth } from '../../hooks/useAuth'
 
 const EMPLOYEES_STORAGE_KEY = 'employees'
 
@@ -55,9 +57,12 @@ const readEmployees = () => {
 }
 
 const Employees = () => {
+  const { register } = useAuth()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [employeeToRemove, setEmployeeToRemove] = useState(null)
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
 
@@ -78,7 +83,7 @@ const Employees = () => {
     [],
   )
 
-  const handleCreateEmployee = (event) => {
+  const handleCreateEmployee = async (event) => {
     event.preventDefault()
     if (!form.name || !form.email || !form.password) {
       toast.error('Please complete name, email, and password.')
@@ -95,24 +100,38 @@ const Employees = () => {
     }
 
     setSaving(true)
-    const newEmployee = {
-      id: Date.now(),
-      name: form.name.trim(),
-      email: form.email.trim(),
-      password: form.password,
-      department: form.department,
-      role: form.role,
-      isActive: true,
-      joiningDate: new Date().toISOString().split('T')[0],
-    }
+    try {
+      const newUser = await register({
+        username: form.email.split('@')[0],
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        role: form.role,
+        department: form.department,
+      })
 
-    const nextEmployees = [...employees, newEmployee]
-    saveEmployees(nextEmployees)
-    setEmployees(nextEmployees)
-    setForm(initialForm)
-    setSaving(false)
-    setModalOpen(false)
-    toast.success('Employee Added Successfully')
+      const newEmployee = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        department: newUser.department,
+        role: newUser.role,
+        isActive: true,
+        joiningDate: new Date().toISOString().split('T')[0],
+      }
+
+      const nextEmployees = [...employees, newEmployee]
+      saveEmployees(nextEmployees)
+      setEmployees(nextEmployees)
+      setForm(initialForm)
+      setModalOpen(false)
+      toast.success('Employee added successfully. Employee can now login.')
+    } catch (error) {
+      toast.error(error.message || 'Unable to add employee.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const toggleStatus = (employee) => {
@@ -122,6 +141,26 @@ const Employees = () => {
     saveEmployees(nextEmployees)
     setEmployees(nextEmployees)
     toast.success('Employee status updated.')
+  }
+
+  const removeEmployee = (employee) => {
+    setEmployeeToRemove(employee)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmRemoveEmployee = () => {
+    if (!employeeToRemove) return
+    const nextEmployees = employees.filter((item) => item.id !== employeeToRemove.id)
+    saveEmployees(nextEmployees)
+    setEmployees(nextEmployees)
+    setEmployeeToRemove(null)
+    setDeleteConfirmOpen(false)
+    toast.success('Employee removed.')
+  }
+
+  const cancelRemoveEmployee = () => {
+    setEmployeeToRemove(null)
+    setDeleteConfirmOpen(false)
   }
 
   return (
@@ -197,6 +236,19 @@ const Employees = () => {
                             className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
                           >
                             {employee.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <Link
+                            to={`/admin/attendance?employee=${encodeURIComponent(employee.name)}`}
+                            className="ml-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                          >
+                            View Attendance
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => removeEmployee(employee)}
+                            className="ml-2 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-200"
+                          >
+                            Remove
                           </button>
                         </td>
                       </tr>
@@ -294,6 +346,35 @@ const Employees = () => {
                     {saving ? 'Adding employee...' : 'Add Employee'}
                   </button>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {deleteConfirmOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+              <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+                <h3 className="text-xl font-semibold text-slate-900">Remove Employee</h3>
+                <p className="mt-3 text-sm text-slate-600">
+                  Are you sure you want to remove{' '}
+                  <span className="font-semibold text-slate-900">{employeeToRemove?.name}</span>?
+                </p>
+                <p className="mt-1 text-sm text-slate-500">This action cannot be undone.</p>
+                <div className="mt-6 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={cancelRemoveEmployee}
+                    className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700"
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmRemoveEmployee}
+                    className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Yes
+                  </button>
+                </div>
               </div>
             </div>
           )}

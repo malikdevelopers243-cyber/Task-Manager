@@ -7,6 +7,7 @@ import Spinner from '../components/shared/Spinner'
 
 const Signup = () => {
   const [form, setForm] = useState({
+    username: '',
     name: '',
     email: '',
     password: '',
@@ -18,7 +19,7 @@ const Signup = () => {
   const navigate = useNavigate()
 
   const isFormValid = useMemo(
-    () => form.name && form.email && form.password && form.role,
+    () => form.username && form.name && form.email && form.password && form.role,
     [form],
   )
 
@@ -29,6 +30,12 @@ const Signup = () => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailPattern.test(form.email)) {
       toast.error('Please enter a valid email address.')
+      setLoading(false)
+      return
+    }
+
+    if (!form.username.trim()) {
+      toast.error('Please enter a username.')
       setLoading(false)
       return
     }
@@ -65,6 +72,17 @@ const Signup = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Username</label>
+            <input
+              type="text"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              required
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+            />
+          </div>
+
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Full Name</label>
             <input
