@@ -264,7 +264,7 @@ const Dashboard = () => {
         <main className="flex-1 min-w-0 p-4 md:p-6">
           <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-sky-600">Employee dashboard</p>
+              <p className="text-sm uppercase tracking-[0.3em] text-sky-600"></p>
               <h1 className="mt-2 text-3xl font-semibold text-slate-900">{formatDate(now)}</h1>
               <p className="mt-1 text-lg text-slate-600">Current time: {formatTime(now)}</p>
             </div>
@@ -361,7 +361,7 @@ const Dashboard = () => {
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Any blockers?</label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Any Issues</label>
                 <textarea
                   value={scrum.blockers}
                   onChange={(e) => setScrum({ ...scrum, blockers: e.target.value })}

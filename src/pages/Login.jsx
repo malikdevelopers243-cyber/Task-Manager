@@ -25,8 +25,8 @@ const Login = () => {
     try {
       const user = await login(identifier, password)
 
-      if (!user || !user.role) {
-        toast.error('Role not found for this user.')
+      if (!user) {
+        toast.error('Invalid username/email or password.')
       } else if (user.role === 'admin') {
         navigate('/admin/dashboard')
       } else {

@@ -26,7 +26,10 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     )
   }
 
-  if (!activeUser || activeRole !== allowedRole) {
+  const canAccessEmployeeRoutes = allowedRole === 'employee' && activeRole && activeRole !== 'admin'
+  const hasAccess = allowedRole === 'employee' ? canAccessEmployeeRoutes : activeRole === allowedRole
+
+  if (!activeUser || !hasAccess) {
     return <Navigate to="/login" replace />
   }
 

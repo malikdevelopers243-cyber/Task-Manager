@@ -4,6 +4,7 @@ import { auth } from '../firebase/config.js'
 
 const LOCAL_STORAGE_KEY = 'office-management-current-user'
 const LOCAL_STORAGE_USERS_KEY = 'office-management-users'
+const EMPLOYEES_STORAGE_KEY = 'employees'
 const PROFILE_PICTURES_KEY = 'office-management-profile-pictures'
 
 const MOCK_USERS = [
@@ -55,37 +56,62 @@ const saveProfilePictures = (pictures) => {
   localStorage.setItem(PROFILE_PICTURES_KEY, JSON.stringify(pictures))
 }
 
+const loadEmployeeUsers = () => {
+  const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
+  if (!raw) return []
+
+  try {
+    const employees = JSON.parse(raw)
+    if (!Array.isArray(employees)) return []
+
+    return employees
+      .filter((employee) => employee.email)
+      .map((employee) => ({
+        id: employee.id,
+        username: employee.email.split('@')[0],
+        name: employee.name,
+        email: employee.email,
+        password: employee.password,
+        role: employee.role || 'employee',
+        department: employee.department || '',
+        contact: employee.contact || '',
+        profilePicture: employee.profilePicture || null,
+      }))
+  } catch {
+    localStorage.removeItem(EMPLOYEES_STORAGE_KEY)
+    return []
+  }
+}
+
+const getInitialCurrentUser = () => {
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+  if (!stored) return null
+
+  try {
+    const user = JSON.parse(stored)
+    if (user && !user.uid && user.id) {
+      user.uid = user.id
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user))
+    }
+    return user
+  } catch {
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    return null
+  }
+}
+
 export const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null)
-  const [userRole, setUserRole] = useState(null)
-  const [storedUsers, setStoredUsers] = useState([])
-  const [profilePictures, setProfilePictures] = useState({})
-  const [loading, setLoading] = useState(true)
+  const initialUser = getInitialCurrentUser()
+  const [currentUser, setCurrentUser] = useState(initialUser)
+  const [userRole, setUserRole] = useState(initialUser?.role || null)
+  const [storedUsers, setStoredUsers] = useState(loadStoredUsers)
+  const [profilePictures, setProfilePictures] = useState(loadProfilePictures)
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (stored) {
-      try {
-        const user = JSON.parse(stored)
-        if (user && !user.uid && user.id) {
-          user.uid = user.id
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user))
-        }
-        setCurrentUser(user)
-        setUserRole(user?.role || null)
-      } catch (error) {
-        localStorage.removeItem(LOCAL_STORAGE_KEY)
-      }
-    }
-
-    setStoredUsers(loadStoredUsers())
-    setProfilePictures(loadProfilePictures())
-    setLoading(false)
-  }, [])
-
-  const allUsers = useMemo(() => [...MOCK_USERS, ...storedUsers], [storedUsers])
+  const employeeUsers = useMemo(() => loadEmployeeUsers(), [])
+  const allUsers = useMemo(() => [...MOCK_USERS, ...storedUsers, ...employeeUsers], [storedUsers, employeeUsers])
 
   const updateProfilePicture = async (imageUrl) => {
     if (!currentUser) return
