@@ -297,9 +297,9 @@ const Employees = () => {
         </div>
 
           {activeActionEmployee && (
-            <div className="fixed right-20 top-72 z-40 w-50 overflow-hidden rounded-2xl border border-slate-200 bg-orange-400 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+            <div className="fixed right-20 top-72 z-40 w-50 overflow-hidden rounded-2xl border border-slate-200 bg-orange-600 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.75)] backdrop-blur-xl">
               <div className="mb-3 flex items-center justify-between border-b border-slate-700 pb-3 text-sm font-semibold uppercase tracking-[0.15em] text-slate-300">
-                <span>Employee Actions</span>
+                <span>Actions</span>
                 <button
                   type="button"
                   onClick={() => setActiveActionEmployee(null)}
@@ -349,7 +349,7 @@ const Employees = () => {
                   onClick={() => setActiveActionEmployee(null)}
                   className="flex w-full items-center justify-between rounded-3xl bg-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-slate-800"
                 >
-                  <span>View Attendance</span>
+                  <span>Attendance</span>
                   <span className="text-xs text-slate-400">Open</span>
                 </Link>
                 <button
@@ -359,10 +359,10 @@ const Employees = () => {
                     setActiveActionEmployee(null)
                     if (selectedEmployee) removeEmployee(selectedEmployee)
                   }}
-                  className="flex w-full items-center justify-between rounded-3xl bg-rose-600 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-rose-500"
+                  className="flex w-full items-center justify-between rounded-3xl bg-slate-700 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-rose-500"
                 >
                   <span>Remove</span>
-                  <span className="text-xs text-slate-400">Delete</span>
+                  <span className="text-xs text-green-200">Delete</span>
                 </button>
               </div>
             </div>
