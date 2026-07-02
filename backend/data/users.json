@@ -1,0 +1,80 @@
+[
+  {
+    "id": "1782917342152",
+    "username": "backendtester",
+    "name": "Backend Tester",
+    "email": "backendtester@example.com",
+    "password": "$2a$10$mdDdwyk7scgaGZlBCI2HLeZb5OLEY.wLSdliaXF0hY.tLh.wlglhy",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "1234567890",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-01"
+  },
+  {
+    "id": "1782968608984",
+    "username": "backendtester1782968608739",
+    "name": "Backend Tester",
+    "email": "backendtester+1782968608735@example.com",
+    "password": "$2a$10$kHrasqlGDyPw854uHUxjAeoFeKGyYNLqrxw36qivwWyvMV73RErn.",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "1234567890",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1782969096892",
+    "username": "backendtester1782969096651",
+    "name": "Backend Tester",
+    "email": "backendtester+1782969096641@example.com",
+    "password": "$2a$10$YmZjQ70IWDoMY6zPEGgsR.BjHYMI.5J66DkNhwFpH5GGwUR/11xNa",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "1234567890",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1782970003000",
+    "username": "admin3020",
+    "name": "Mr Admin",
+    "email": "malikdevelopers243@gmail.com",
+    "password": "$2a$10$jCmPhJcFY31boeoVtCF8vuT7cXqGrFmQKaSWe1SLxonmewNyh28RK",
+    "role": "admin",
+    "department": "admin",
+    "contact": "",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1782976283121",
+    "username": "one",
+    "name": "One",
+    "email": "one@gmail.com",
+    "password": "$2a$10$7236.pzhOq19hnWdms68DeKNCr2p9aHKwTswMxsfS/4rtVebiNza2",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "03014166594",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1782977061945",
+    "username": "backendtester1782977061678",
+    "name": "Backend Tester",
+    "email": "backendtester+1782977061666@example.com",
+    "password": "$2a$10$rkbqs6kLrwtRAqJ6sEjSfeOjut3LkKE5E/WJicDWQYJPUBudNNDlO",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "1234567890",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  }
+]

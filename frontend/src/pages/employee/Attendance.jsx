@@ -45,6 +45,14 @@ const formatDate = (dateValue) => {
   }).format(date)
 }
 
+const formatBreakDuration = (seconds) => {
+  if (seconds <= 0) return '0s'
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  const remaining = seconds % 60
+  return remaining ? `${minutes}m ${remaining}s` : `${minutes}m`
+}
+
 const getRecordDate = (record) => {
   return parseDateValue(record?.date)
 }
@@ -95,7 +103,7 @@ const Attendance = () => {
   }, [filteredAttendance])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <div className="flex flex-col gap-6 md:flex-row">
         <div className="md:hidden">
@@ -106,53 +114,53 @@ const Attendance = () => {
 
         <main className="flex-1 min-w-0 p-4 md:p-6">
           <div className="mb-6 grid gap-6 md:grid-cols-3">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Present days</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900">{summary.presentDays}</p>
+            <div className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/20">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Present days</p>
+              <p className="mt-4 text-3xl font-semibold text-white">{summary.presentDays}</p>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Total hours this month</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900">{summary.totalHours}</p>
+            <div className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/20">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Total hours this month</p>
+              <p className="mt-4 text-3xl font-semibold text-white">{summary.totalHours}</p>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Selected month</p>
-              <p className="mt-4 text-2xl font-semibold text-slate-900">{months[monthFilter]}</p>
+            <div className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/20">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Selected month</p>
+              <p className="mt-4 text-2xl font-semibold text-white">{months[monthFilter]}</p>
             </div>
           </div>
 
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">My Attendance</h2>
+            <h2 className="text-xl font-semibold text-white">My Attendance</h2>
             <select
               value={monthFilter}
               onChange={(e) => setMonthFilter(Number(e.target.value))}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+              className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none"
             >
               {months.map((month, index) => (
-                <option key={month} value={index}>{month}</option>
+                <option key={month} value={index} className="bg-slate-950 text-slate-100">{month}</option>
               ))}
             </select>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+          <div className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-slate-950/20">
+            <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
+              <thead className="bg-slate-900">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Date</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Check-In</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Check-Out</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Break Time</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Total Hours</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-500">Status</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Date</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-In</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-Out</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Break Time</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Total Hours</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-700 bg-slate-950">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading attendance...</td>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading attendance...</td>
                   </tr>
                 ) : filteredAttendance.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No attendance records found for this month.</td>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">No attendance records found for this month.</td>
                   </tr>
                 ) : (
                   filteredAttendance.map((record) => {
@@ -168,14 +176,14 @@ const Attendance = () => {
                           return sum
                         }, 0)
                       : 0
-                    const breakMinutes = Math.floor(breakTime / 60)
+                    const formattedBreakTime = formatBreakDuration(breakTime)
                     return (
-                      <tr key={record.id}>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-700">{formatDate(record.date)}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-700">{checkIn ? formatTime(checkIn) : '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-700">{checkOut ? formatTime(checkOut) : '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-700">{breakMinutes ? `${breakMinutes}m` : '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-700">{record.totalHours ?? '-'}</td>
+                      <tr key={record.id} className="hover:bg-slate-900/70">
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{formatDate(record.date)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{checkIn ? formatTime(checkIn) : '-'}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{checkOut ? formatTime(checkOut) : '-'}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{formattedBreakTime}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{record.totalHours ?? '-'}</td>
                         <td className="whitespace-nowrap px-6 py-4">
                           <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
                             {record.status || 'absent'}

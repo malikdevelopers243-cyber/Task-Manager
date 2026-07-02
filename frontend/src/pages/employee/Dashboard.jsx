@@ -290,7 +290,7 @@ const Dashboard = () => {
   const checkedOutText = checkedOutAt ? `Checked out at ${formatTime(checkedOutAt)}` : ''
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <div className="flex flex-col gap-6 md:flex-row">
         <div className="md:hidden">
@@ -306,18 +306,18 @@ const Dashboard = () => {
               <h1 className="mt-2 text-3xl font-semibold text-white">{formatDate(now)}</h1>
               <p className="mt-1 text-lg text-slate-300">Current time: {formatTime(now)}</p>
             </div>
-            <div className="rounded-3xl bg-slate-900/80 px-5 py-4 text-left md:text-right text-slate-100 shadow-inner shadow-black/20">
-              <p className="text-sm text-emerald-200">Hello</p>
-              <p className="mt-2 text-xl font-semibold text-white">{employeeName}</p>
-              <p className="mt-1 text-sm text-slate-300">{checkedInText}</p>
-              {checkedOutAt && <p className="mt-1 text-sm text-slate-300">{checkedOutText}</p>}
+            <div className="rounded-3xl bg-gradient-to-br from-yellow-300 via-sky-500 to-orange-400 px-5 py-4 text-left text-slate-950 shadow-lg shadow-orange-500/20 ring-1 ring-white/10">
+              <p className="text-sm font-extrabold uppercase tracking-[0.24em] text-slate-950">Hello</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">{employeeName}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-950">{checkedInText}</p>
+              {checkedOutAt && <p className="mt-1 text-sm font-semibold text-slate-950">{checkedOutText}</p>}
             </div>
           </div>
 
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">Check-In</h2>
-              <p className="mt-2 text-sm text-slate-500">Start your workday attendance.</p>
+            <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/20">
+              <h2 className="text-xl font-semibold text-white">Check-In</h2>
+              <p className="mt-2 text-sm text-slate-400">Start your workday attendance.</p>
               <button
                 onClick={handleCheckIn}
                 disabled={Boolean(checkedInAt) || checkingIn}
@@ -327,9 +327,9 @@ const Dashboard = () => {
               </button>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">Break</h2>
-              <p className="mt-2 text-sm text-slate-500">Track your break time while you work.</p>
+            <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/30">
+              <h2 className="text-xl font-semibold text-white">Break</h2>
+              <p className="mt-2 text-sm text-slate-400">Track your break time while you work.</p>
               <button
                 onClick={activeBreakStart ? handleEndBreak : handleStartBreak}
                 disabled={!canTakeBreak || savingBreak}
@@ -337,17 +337,17 @@ const Dashboard = () => {
               >
                 {activeBreakStart ? (savingBreak ? 'Ending break...' : 'End Break') : 'Start Break'}
               </button>
-              <div className="mt-4 space-y-2 text-sm text-slate-600">
+              <div className="mt-4 space-y-2 text-sm text-slate-300">
                 {activeBreakStart && <p>Break started at {formatTime(activeBreakStart)}</p>}
                 {breaks.length > 0 && (
                   <div>
-                    <p className="font-semibold text-slate-900">Break history</p>
+                    <p className="font-semibold text-white">Break history</p>
                     <ul className="mt-2 space-y-1">
                       {breaks.map((item, index) => (
-                        <li key={index} className="rounded-2xl bg-slate-50 px-3 py-2">
+                        <li key={index} className="rounded-2xl bg-slate-800 px-3 py-2 text-slate-100">
                           <span>Break {index + 1}: </span>
                           <span>{formatTime(item.start)} - {formatTime(item.end)}</span>
-                          <span className="text-slate-500"> ({formatDuration(item.end - item.start)})</span>
+                          <span className="text-slate-400"> ({formatDuration(item.end - item.start)})</span>
                         </li>
                       ))}
                     </ul>
@@ -356,9 +356,9 @@ const Dashboard = () => {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">Checkout</h2>
-              <p className="mt-2 text-sm text-slate-500">Submit your scrum report before you finish the day.</p>
+            <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/30">
+              <h2 className="text-xl font-semibold text-white">Checkout</h2>
+              <p className="mt-2 text-sm text-slate-400">Submit your scrum report before you finish the day.</p>
               <button
                 onClick={handleCheckout}
                 disabled={!canCheckout || savingCheckout}
@@ -367,45 +367,45 @@ const Dashboard = () => {
                 {savingCheckout ? 'Checking out...' : hasCheckedOut ? 'Checked Out' : 'Check Out'}
               </button>
               {!scrumSubmitted && hasCheckedIn && !hasCheckedOut && (
-                <p className="mt-3 text-sm text-amber-600">Scrum report is recommended before checkout.</p>
+                <p className="mt-3 text-sm text-amber-300">Scrum report is recommended before checkout.</p>
               )}
             </section>
           </div>
 
-          <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Daily Scrum Report</h2>
-            <p className="mt-2 text-sm text-slate-500">This is required before checkout.</p>
+          <section className="mt-6 rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/30">
+            <h2 className="text-xl font-semibold text-white">Daily Scrum Report</h2>
+            <p className="mt-2 text-sm text-slate-400">This is required before checkout.</p>
             <form className="mt-6 space-y-5" onSubmit={handleScrumSubmit}>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">What did you complete today?</label>
+                <label className="mb-2 block text-sm font-medium text-slate-300">What did you complete today?</label>
                 <textarea
                   value={scrum.completed}
                   onChange={(e) => setScrum({ ...scrum, completed: e.target.value })}
                   rows={4}
                   required
                   disabled={!canSubmitScrum || hasCheckedOut}
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+                  className="w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:bg-slate-900"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">What will you do tomorrow?</label>
+                <label className="mb-2 block text-sm font-medium text-slate-300">What will you do tomorrow?</label>
                 <textarea
                   value={scrum.tomorrow}
                   onChange={(e) => setScrum({ ...scrum, tomorrow: e.target.value })}
                   rows={4}
                   required
                   disabled={!canSubmitScrum || hasCheckedOut}
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+                  className="w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:bg-slate-900"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Any Issues</label>
+                <label className="mb-2 block text-sm font-medium text-slate-300">Any Issues</label>
                 <textarea
                   value={scrum.blockers}
                   onChange={(e) => setScrum({ ...scrum, blockers: e.target.value })}
                   rows={3}
                   disabled={!canSubmitScrum || hasCheckedOut}
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+                  className="w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:bg-slate-900"
                 />
               </div>
               <button

@@ -27,7 +27,9 @@ const readEmployees = () => {
   const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
   if (!raw) return []
   try {
-    return JSON.parse(raw)
+    const data = JSON.parse(raw)
+    // Filter to only include employees (not admins/managers)
+    return Array.isArray(data) ? data.filter(emp => emp.role === 'employee') : []
   } catch {
     localStorage.removeItem(EMPLOYEES_STORAGE_KEY)
     return []
@@ -176,9 +178,14 @@ const Employees = () => {
     try {
       await removeUser(employeeToRemove.id)
     } catch (error) {
-      console.error('Remove user failed', error)
-      toast.error('Unable to remove employee login.')
-      return
+      // If user doesn't exist on backend, we can still remove from frontend
+      if (error.message && error.message.includes('not found')) {
+        console.warn('User not found on backend, removing from frontend only', error)
+      } else {
+        console.error('Remove user failed', error)
+        toast.error('Unable to remove employee login.')
+        return
+      }
     }
 
     const nextEmployees = employees.filter((item) => item.id !== employeeToRemove.id)
@@ -195,7 +202,7 @@ const Employees = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <Toaster position="top-center" />
       <div className="flex flex-col gap-6 p-6 md:flex-row md:items-start">
@@ -206,8 +213,8 @@ const Employees = () => {
         <main className="flex-1 p-6 md:p-0">
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Employee Management</h2>
-              <p className="mt-2 text-sm text-slate-500">Add new employees and manage account status.</p>
+              <h2 className="text-2xl font-semibold text-white">Employee Management</h2>
+              <p className="mt-2 text-sm text-slate-400">Add new employees and manage account status.</p>
             </div>
             <button
               onClick={() => setModalOpen(true)}
@@ -217,22 +224,22 @@ const Employees = () => {
             </button>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-slate-950/30">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50">
+              <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
+                <thead className="bg-slate-900">
                   <tr>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Name</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Email</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Contact</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Department</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Role</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Status</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Joined</th>
-                    <th className="px-6 py-4 text-left font-semibold text-slate-500">Action</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Name</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Email</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Contact</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Department</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Role</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Status</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Joined</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-300">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-slate-700 bg-slate-950">
                   {loading ? (
                     <>
                       <SkeletonRow columns={8} />
@@ -248,11 +255,11 @@ const Employees = () => {
                   ) : (
                     employees.map((employee) => (
                       <tr key={employee.id}>
-                        <td className="px-6 py-4 text-slate-700">{employee.name}</td>
-                        <td className="px-6 py-4 text-slate-700">{employee.email}</td>
-                        <td className="px-6 py-4 text-slate-700">{employee.contact || '-'}</td>
-                        <td className="px-6 py-4 text-slate-700">{employee.department}</td>
-                        <td className="px-6 py-4 text-slate-700 capitalize">{employee.role}</td>
+                        <td className="px-6 py-4 text-slate-100">{employee.name}</td>
+                        <td className="px-6 py-4 text-slate-100">{employee.email}</td>
+                        <td className="px-6 py-4 text-slate-100">{employee.contact || '-'}</td>
+                        <td className="px-6 py-4 text-slate-100">{employee.department}</td>
+                        <td className="px-6 py-4 text-slate-100 capitalize">{employee.role}</td>
                         <td className="px-6 py-4">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
@@ -262,13 +269,13 @@ const Employees = () => {
                             {employee.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">{employee.joiningDate}</td>
+                        <td className="px-6 py-4 text-slate-100">{employee.joiningDate}</td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => toggleStatus(employee)}
-                              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             >
                               {employee.isActive ? 'Deactivate' : 'Activate'}
                             </button>
@@ -314,14 +321,14 @@ const Employees = () => {
           </div>
 
           {modalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-              <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-950 p-8 shadow-2xl shadow-slate-950/40">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold text-slate-900">
+                    <h3 className="text-xl font-semibold text-white">
                       {employeeToEdit ? 'Edit Employee' : 'Add Employee'}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-400">
                       {employeeToEdit
                         ? 'Update employee details and credentials.'
                         : 'Fill in the information and save the new employee.'}
@@ -334,55 +341,55 @@ const Employees = () => {
                       setEmployeeToEdit(null)
                       setForm(initialForm)
                     }}
-                    className="text-slate-500 hover:text-slate-900"
+                    className="text-slate-300 hover:text-white"
                   >
                     Cancel
                   </button>
                 </div>
                 <form className="grid gap-5" onSubmit={handleSaveEmployee}>
                   <div className="grid gap-5 md:grid-cols-2">
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Full Name
                       <input
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         required
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       />
                     </label>
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Email
                       <input
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         required
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       />
                     </label>
                   </div>
 
                   <div className="grid gap-5 md:grid-cols-2">
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Password
                       <input
                         type="password"
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                         required
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       />
                     </label>
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Department
                       <select
                         value={form.department}
                         onChange={(e) => setForm({ ...form, department: e.target.value })}
                         required
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       >
                         {departments.map((department) => (
-                          <option key={department} value={department}>
+                          <option key={department} value={department} className="bg-slate-950 text-slate-100">
                             {department}
                           </option>
                         ))}
@@ -390,26 +397,26 @@ const Employees = () => {
                     </label>
                   </div>
 
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Role
                       <select
                         value={form.role}
                         onChange={(e) => setForm({ ...form, role: e.target.value })}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       >
                         {roleOptions.map((r) => (
-                          <option key={r.value} value={r.value}>{r.label}</option>
+                          <option key={r.value} value={r.value} className="bg-slate-950 text-slate-100">{r.label}</option>
                         ))}
                       </select>
                     </label>
 
-                    <label className="block text-sm text-slate-700">
+                    <label className="block text-sm text-slate-300">
                       Contact Number
                       <input
                         type="tel"
                         value={form.contact}
                         onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                        className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       />
                     </label>
 
@@ -427,13 +434,13 @@ const Employees = () => {
 
           {deleteConfirmOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-              <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
-                <h3 className="text-xl font-semibold text-slate-900">Remove Employee</h3>
-                <p className="mt-3 text-sm text-slate-600">
+              <div className="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-950 p-8 shadow-2xl shadow-slate-950/40">
+                <h3 className="text-xl font-semibold text-white">Remove Employee</h3>
+                <p className="mt-3 text-sm text-slate-300">
                   Are you sure you want to remove{' '}
-                  <span className="font-semibold text-slate-900">{employeeToRemove?.name}</span>?
+                  <span className="font-semibold text-white">{employeeToRemove?.name}</span>?
                 </p>
-                <p className="mt-1 text-sm text-slate-500">This action cannot be undone.</p>
+                <p className="mt-1 text-sm text-slate-400">This action cannot be undone.</p>
                 <div className="mt-6 flex items-center justify-end gap-3">
                   <button
                     type="button"

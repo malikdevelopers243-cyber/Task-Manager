@@ -13,7 +13,7 @@ const loadStoredUsers = () => {
   const raw = localStorage.getItem(LOCAL_STORAGE_USERS_KEY)
   if (!raw) return []
   try {
-    return JSON.parse(raw) 
+    return JSON.parse(raw)
   } catch {
     localStorage.removeItem(LOCAL_STORAGE_USERS_KEY)
     return []
@@ -48,7 +48,7 @@ const loadEmployeeUsers = () => {
     if (!Array.isArray(employees)) return []
 
     return employees
-      .filter((employee) => employee.email)
+      .filter((employee) => employee.email && employee.role === 'employee')
       .map((employee) => ({
         id: employee.id,
         username: employee.email.split('@')[0],
@@ -149,6 +149,25 @@ export const AuthProvider = ({ children }) => {
     bootstrap()
   }, [])
 
+  // Clean up employees storage to only contain employees (not admins/managers)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
+      if (raw) {
+        const employees = JSON.parse(raw)
+        if (Array.isArray(employees)) {
+          const cleanedEmployees = employees.filter((emp) => emp.role === 'employee')
+          if (cleanedEmployees.length !== employees.length) {
+            localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(cleanedEmployees))
+            setEmployeeUsers(loadEmployeeUsers())
+          }
+        }
+      }
+    } catch {
+      // ignore cleanup errors
+    }
+  }, [])
+
   const allUsers = useMemo(() => {
     const seen = new Set()
     const unique = []
@@ -213,19 +232,22 @@ export const AuthProvider = ({ children }) => {
       const EMPLOYEES_KEY = 'employees'
       const raw = localStorage.getItem(EMPLOYEES_KEY)
       const existing = raw ? JSON.parse(raw) : []
-      const newEmployee = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        password: '********',
-        department: newUser.department || '',
-        role: newUser.role || 'employee',
-        contact: newUser.contact || '',
-        isActive: true,
-        joiningDate: new Date().toISOString().split('T')[0],
+      // Only store employees with role='employee', not admins/managers
+      if (newUser.role === 'employee') {
+        const newEmployee = {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          password: '********',
+          department: newUser.department || '',
+          role: newUser.role || 'employee',
+          contact: newUser.contact || '',
+          isActive: true,
+          joiningDate: new Date().toISOString().split('T')[0],
+        }
+        const nextEmployees = [...existing, newEmployee]
+        localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(nextEmployees))
       }
-      const nextEmployees = [...existing, newEmployee]
-      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(nextEmployees))
       setEmployeeUsers(loadEmployeeUsers())
     } catch {
       // ignore local storage errors
@@ -253,8 +275,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
       const existing = raw ? JSON.parse(raw) : []
-      const nextEmployees = existing.map((item) => (item.id === uid ? { ...item, ...nextUser } : item))
+      // Only keep employees with role='employee'
+      const nextEmployees = existing
+        .filter((item) => item.id !== uid || nextUser.role === 'employee')
+        .map((item) => (item.id === uid ? { ...item, ...nextUser } : item))
       localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(nextEmployees))
+      setEmployeeUsers(loadEmployeeUsers())
     } catch {
       // ignore local storage write errors
     }
@@ -326,4 +352,10 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider.')
+  }
+  return context
+}
