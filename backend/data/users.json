@@ -76,5 +76,18 @@
     "profilePicture": null,
     "isActive": true,
     "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1782991438982",
+    "username": "two",
+    "name": "Two",
+    "email": "two@gmail.com",
+    "password": "$2a$10$sP4qYW47pbiCTF7fjyi8/.k0Ef.TVpENCtq8kqhWnH1bV0/5i15OW",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "0301-1234678",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
   }
 ]

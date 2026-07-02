@@ -15,5 +15,15 @@
     "totalHours": 0.63,
     "scrumSubmitted": true,
     "checkOut": "2026-07-02T07:50:05.605Z"
+  },
+  {
+    "id": "1782991490140",
+    "employeeId": "1782991438982",
+    "employeeName": "Two",
+    "date": "2026-07-02",
+    "checkIn": "2026-07-02T11:24:50.132Z",
+    "status": "present",
+    "breaks": [],
+    "totalHours": 0
   }
 ]

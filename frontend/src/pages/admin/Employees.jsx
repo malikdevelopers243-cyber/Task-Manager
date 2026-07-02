@@ -44,6 +44,7 @@ const Employees = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [employeeToRemove, setEmployeeToRemove] = useState(null)
   const [employeeToEdit, setEmployeeToEdit] = useState(null)
+  const [activeActionEmployee, setActiveActionEmployee] = useState(null)
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
 
@@ -167,7 +168,12 @@ const Employees = () => {
     toast.success('Employee status updated.')
   }
 
+  const toggleActionMenu = (employeeId) => {
+    setActiveActionEmployee((prev) => (prev === employeeId ? null : employeeId))
+  }
+
   const removeEmployee = (employee) => {
+    setActiveActionEmployee(null)
     setEmployeeToRemove(employee)
     setDeleteConfirmOpen(true)
   }
@@ -224,9 +230,10 @@ const Employees = () => {
             </button>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-slate-950/30">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
+          <div className="overflow-visible rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-slate-950/30">
+            <div className="overflow-visible rounded-3xl">
+              <div className="overflow-x-auto overflow-y-visible">
+                <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
                 <thead className="bg-slate-900">
                   <tr>
                     <th className="px-6 py-4 text-left font-semibold text-slate-300">Name</th>
@@ -270,47 +277,15 @@ const Employees = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-slate-100">{employee.joiningDate}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleStatus(employee)}
-                              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            type="button"
+                              onClick={() => toggleActionMenu(employee.id)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-100 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              aria-label="Open employee actions"
                             >
-                              {employee.isActive ? 'Deactivate' : 'Activate'}
+                              <span className="text-lg leading-none">⋮</span>
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEmployeeToEdit(employee)
-                                setForm({
-                                  name: employee.name,
-                                  email: employee.email,
-                                  password: '',
-                                  department: employee.department || 'Engineering',
-                                  role: employee.role,
-                                  contact: employee.contact || '',
-                                })
-                                setModalOpen(true)
-                              }}
-                              className="rounded-full bg-amber-100 px-3 py-1.5 text-[11px] font-semibold text-amber-700 shadow-sm transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                            >
-                              Edit
-                            </button>
-                            <Link
-                              to={`/admin/attendance?employee=${encodeURIComponent(employee.name)}`}
-                              className="rounded-full bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
-                            >
-                              View Attendance
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={() => removeEmployee(employee)}
-                              className="rounded-full bg-rose-100 px-3 py-1.5 text-[11px] font-semibold text-rose-700 shadow-sm transition hover:bg-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                            >
-                              Remove
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))
@@ -319,6 +294,79 @@ const Employees = () => {
               </table>
             </div>
           </div>
+        </div>
+
+          {activeActionEmployee && (
+            <div className="fixed right-20 top-72 z-40 w-50 overflow-hidden rounded-2xl border border-slate-200 bg-orange-400 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+              <div className="mb-3 flex items-center justify-between border-b border-slate-700 pb-3 text-sm font-semibold uppercase tracking-[0.15em] text-slate-300">
+                <span>Employee Actions</span>
+                <button
+                  type="button"
+                  onClick={() => setActiveActionEmployee(null)}
+                  className="text-slate-400 transition hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selectedEmployee = employees.find((item) => item.id === activeActionEmployee)
+                    setActiveActionEmployee(null)
+                    if (selectedEmployee) toggleStatus(selectedEmployee)
+                  }}
+                  className="flex w-full items-center justify-between rounded-3xl bg-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  <span>{employees.find((item) => item.id === activeActionEmployee)?.isActive ? 'Deactivate' : 'Activate'}</span>
+                  <span className="text-xs text-slate-400">{employees.find((item) => item.id === activeActionEmployee)?.isActive ? 'Off' : 'On'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selectedEmployee = employees.find((item) => item.id === activeActionEmployee)
+                    setActiveActionEmployee(null)
+                    if (selectedEmployee) {
+                      setEmployeeToEdit(selectedEmployee)
+                      setForm({
+                        name: selectedEmployee.name,
+                        email: selectedEmployee.email,
+                        password: '',
+                        department: selectedEmployee.department || 'Engineering',
+                        role: selectedEmployee.role,
+                        contact: selectedEmployee.contact || '',
+                      })
+                      setModalOpen(true)
+                    }
+                  }}
+                  className="flex w-full items-center justify-between rounded-3xl bg-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  <span>Edit</span>
+                  <span className="text-xs text-slate-400">Update</span>
+                </button>
+                <Link
+                  to={`/admin/attendance?employee=${encodeURIComponent(employees.find((item) => item.id === activeActionEmployee)?.name || '')}`}
+                  onClick={() => setActiveActionEmployee(null)}
+                  className="flex w-full items-center justify-between rounded-3xl bg-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  <span>View Attendance</span>
+                  <span className="text-xs text-slate-400">Open</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selectedEmployee = employees.find((item) => item.id === activeActionEmployee)
+                    setActiveActionEmployee(null)
+                    if (selectedEmployee) removeEmployee(selectedEmployee)
+                  }}
+                  className="flex w-full items-center justify-between rounded-3xl bg-rose-600 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-rose-500"
+                >
+                  <span>Remove</span>
+                  <span className="text-xs text-slate-400">Delete</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {modalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -397,6 +445,7 @@ const Employees = () => {
                     </label>
                   </div>
 
+                  <div className="grid gap-5 md:grid-cols-2">
                     <label className="block text-sm text-slate-300">
                       Role
                       <select
@@ -419,6 +468,7 @@ const Employees = () => {
                         className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none"
                       />
                     </label>
+                  </div>
 
                   <button
                     type="submit"
