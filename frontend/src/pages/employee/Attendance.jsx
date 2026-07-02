@@ -142,59 +142,61 @@ const Attendance = () => {
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-slate-950/20">
-            <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
-              <thead className="bg-slate-900">
-                <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Date</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-In</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-Out</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Break Time</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Total Hours</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-300">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700 bg-slate-950">
-                {loading ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-700 text-sm text-slate-100">
+                <thead className="bg-slate-900">
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading attendance...</td>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Date</th>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-In</th>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Check-Out</th>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Break Time</th>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Total Hours</th>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-300">Status</th>
                   </tr>
-                ) : filteredAttendance.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">No attendance records found for this month.</td>
-                  </tr>
-                ) : (
-                  filteredAttendance.map((record) => {
-                    const checkIn = parseDateValue(record.checkIn)
-                    const checkOut = parseDateValue(record.checkOut)
-                    const breakTime = Array.isArray(record.breaks)
-                      ? record.breaks.reduce((sum, item) => {
-                          const breakStart = parseDateValue(item.start)
-                          const breakEnd = parseDateValue(item.end)
-                          if (breakStart && breakEnd) {
-                            return sum + Math.round((breakEnd - breakStart) / 1000)
-                          }
-                          return sum
-                        }, 0)
-                      : 0
-                    const formattedBreakTime = formatBreakDuration(breakTime)
-                    return (
-                      <tr key={record.id} className="hover:bg-slate-900/70">
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{formatDate(record.date)}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{checkIn ? formatTime(checkIn) : '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{checkOut ? formatTime(checkOut) : '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{formattedBreakTime}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-slate-100">{record.totalHours ?? '-'}</td>
-                        <td className="whitespace-nowrap px-6 py-4">
-                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
-                            {record.status || 'absent'}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-700 bg-slate-950">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading attendance...</td>
+                    </tr>
+                  ) : filteredAttendance.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-400">No attendance records found for this month.</td>
+                    </tr>
+                  ) : (
+                    filteredAttendance.map((record) => {
+                      const checkIn = parseDateValue(record.checkIn)
+                      const checkOut = parseDateValue(record.checkOut)
+                      const breakTime = Array.isArray(record.breaks)
+                        ? record.breaks.reduce((sum, item) => {
+                            const breakStart = parseDateValue(item.start)
+                            const breakEnd = parseDateValue(item.end)
+                            if (breakStart && breakEnd) {
+                              return sum + Math.round((breakEnd - breakStart) / 1000)
+                            }
+                            return sum
+                          }, 0)
+                        : 0
+                      const formattedBreakTime = formatBreakDuration(breakTime)
+                      return (
+                        <tr key={record.id} className="hover:bg-slate-900/70">
+                          <td className="px-6 py-4 text-slate-100">{formatDate(record.date)}</td>
+                          <td className="px-6 py-4 text-slate-100">{checkIn ? formatTime(checkIn) : '-'}</td>
+                          <td className="px-6 py-4 text-slate-100">{checkOut ? formatTime(checkOut) : '-'}</td>
+                          <td className="px-6 py-4 text-slate-100">{formattedBreakTime}</td>
+                          <td className="px-6 py-4 text-slate-100">{record.totalHours ?? '-'}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
+                              {record.status || 'absent'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </main>
       </div>
