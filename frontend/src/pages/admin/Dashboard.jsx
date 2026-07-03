@@ -38,6 +38,30 @@ const getBreakSeconds = (breaks) => {
   }, 0)
 }
 
+const getDurationSeconds = (record, now) => {
+  if (!record?.checkIn) return 0
+  const checkIn = record.checkIn instanceof Date ? record.checkIn : typeof record?.checkIn?.toDate === 'function' ? record.checkIn.toDate() : new Date(record.checkIn)
+  const end = record.checkOut
+    ? record.checkOut instanceof Date
+      ? record.checkOut
+      : typeof record?.checkOut?.toDate === 'function'
+      ? record.checkOut.toDate()
+      : new Date(record.checkOut)
+    : now
+
+  if (!checkIn || Number.isNaN(checkIn.getTime()) || !end || Number.isNaN(end.getTime())) return 0
+
+  const breakSeconds = getBreakSeconds(record.breaks)
+  return Math.max(0, Math.round((end - checkIn) / 1000) - breakSeconds)
+}
+
+const formatDurationHHMMSS = (seconds) => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 const formatBreakDuration = (seconds) => {
   if (!seconds) return '-'
   if (seconds < 60) return `${seconds}s`
@@ -47,9 +71,17 @@ const formatBreakDuration = (seconds) => {
 }
 
 const getStatusCount = (attendance) => {
-  const present = attendance.filter((item) => item.status === 'present').length
-  const onBreak = attendance.filter((item) => item.breaks?.some((b) => b.start && !b.end)).length
-  const checkedOut = attendance.filter((item) => item.checkOut).length
+  const latestByEmployee = new Map()
+  attendance.forEach((item) => {
+    const employeeId = item?.employeeId ?? item?.id
+    if (!employeeId) return
+    latestByEmployee.set(String(employeeId), item)
+  })
+
+  const records = Array.from(latestByEmployee.values())
+  const present = records.filter((item) => item.status === 'present' && item.checkIn).length
+  const onBreak = records.filter((item) => item.breaks?.some((b) => b.start && !b.end)).length
+  const checkedOut = records.filter((item) => item.checkOut).length
   return { present, onBreak, checkedOut }
 }
 
@@ -71,10 +103,16 @@ const Dashboard = () => {
   const [todayAttendance, setTodayAttendance] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalEmployees, setTotalEmployees] = useState(0)
+  const [now, setNow] = useState(new Date())
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     setTotalEmployees(readEmployees().length)
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -158,7 +196,7 @@ const Dashboard = () => {
                         <td className="px-6 py-4 text-slate-100">{formatTime(record.checkIn)}</td>
                         <td className="px-6 py-4 text-slate-100">{formatTime(record.checkOut)}</td>
                         <td className="px-6 py-4 text-slate-100">{formatBreakDuration(getBreakSeconds(record.breaks))}</td>
-                        <td className="px-6 py-4 text-slate-100">{record.totalHours ?? '-'}</td>
+                        <td className="px-6 py-4 text-slate-100">{formatDurationHHMMSS(getDurationSeconds(record, now))}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${

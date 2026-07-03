@@ -230,10 +230,11 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const EMPLOYEES_KEY = 'employees'
-      const raw = localStorage.getItem(EMPLOYEES_KEY)
-      const existing = raw ? JSON.parse(raw) : []
-      // Only store employees with role='employee', not admins/managers
+      const isInitialAdminSignup = currentUser == null && newUser.role === 'admin'
+
       if (newUser.role === 'employee') {
+        const raw = localStorage.getItem(EMPLOYEES_KEY)
+        const existing = raw ? JSON.parse(raw) : []
         const newEmployee = {
           id: newUser.id,
           name: newUser.name,
@@ -247,6 +248,9 @@ export const AuthProvider = ({ children }) => {
         }
         const nextEmployees = [...existing, newEmployee]
         localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(nextEmployees))
+      } else if (isInitialAdminSignup) {
+        localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([]))
+        setEmployeeUsers([])
       }
       setEmployeeUsers(loadEmployeeUsers())
     } catch {
@@ -295,7 +299,8 @@ export const AuthProvider = ({ children }) => {
     setStoredUsers(nextUsers)
     saveStoredUsers(nextUsers)
 
-    setEmployeeUsers((prev) => prev.filter((item) => item.id !== uid))
+    const nextEmployeeUsers = employeeUsers.filter((item) => item.id !== uid)
+    setEmployeeUsers(nextEmployeeUsers)
 
     try {
       const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)

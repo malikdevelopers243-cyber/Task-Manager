@@ -62,12 +62,25 @@ const authenticateToken = (req, res, next) => {
   }
 }
 
-const getUsers = () => readJson(usersFile)
-const setUsers = (users) => writeJson(usersFile, users)
-const getAttendance = () => readJson(attendanceFile)
-const setAttendance = (attendance) => writeJson(attendanceFile, attendance)
-const getReports = () => readJson(reportsFile)
-const setReports = (reports) => writeJson(reportsFile, reports)
+let userCache = readJson(usersFile)
+let attendanceCache = readJson(attendanceFile)
+let reportsCache = readJson(reportsFile)
+
+const getUsers = () => userCache
+const setUsers = (users) => {
+  userCache = users
+  writeJson(usersFile, users)
+}
+const getAttendance = () => attendanceCache
+const setAttendance = (attendance) => {
+  attendanceCache = attendance
+  writeJson(attendanceFile, attendance)
+}
+const getReports = () => reportsCache
+const setReports = (reports) => {
+  reportsCache = reports
+  writeJson(reportsFile, reports)
+}
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 

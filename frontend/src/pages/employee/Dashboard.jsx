@@ -69,6 +69,14 @@ const formatDuration = (ms) => {
   return `${hours}h ${remainingMinutes}m`
 }
 
+const formatTimeSpan = (ms) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${padTwo(hours)}:${padTwo(minutes)}:${padTwo(seconds)}`
+}
+
 const Dashboard = () => {
   const { currentUser } = useAuth()
   const [now, setNow] = useState(new Date())
@@ -286,6 +294,8 @@ const Dashboard = () => {
     }
   }
 
+  const totalDutyMs = checkedInAt ? (checkedOutAt ? checkedOutAt - checkedInAt : now - checkedInAt) : 0
+  const totalDutyLabel = checkedInAt ? formatTimeSpan(totalDutyMs) : '00:00:00'
   const checkedInText = checkedInAt ? `Checked in at ${formatTime(checkedInAt)}` : 'Not checked in yet'
   const checkedOutText = checkedOutAt ? `Checked out at ${formatTime(checkedOutAt)}` : ''
 
@@ -300,17 +310,25 @@ const Dashboard = () => {
         <Sidebar role="employee" />
 
         <main className="flex-1 min-w-0 p-4 md:p-6">
-          <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-slate-700 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-800 p-6 shadow-2xl md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Today</p>
-              <h1 className="mt-2 text-3xl font-semibold text-white">{formatDate(now)}</h1>
-              <p className="mt-1 text-lg text-slate-300">Current time: {formatTime(now)}</p>
+          <div className="mb-6 grid gap-6 rounded-3xl border border-slate-700 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-800 p-6 shadow-2xl lg:grid-cols-[minmax(220px,1fr)_220px_minmax(220px,1fr)] lg:items-center">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 text-slate-100">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-emerald-100"></p>
+              <p className="mt-3 text-xs uppercase tracking-[0.3em] text-slate-400">{formatDate(now).split(',')[0]}</p>
+              <h1 className="mt-2 text-2xl font-semibold text-white">{formatDate(now).replace(`${formatDate(now).split(',')[0]}, `, '')}</h1>
+              <p className="mt-2 text-sm text-slate-400">Current time: {formatTime(now)}</p>
             </div>
-            <div className="rounded-3xl bg-gradient-to-br from-yellow-300 via-sky-500 to-orange-400 px-5 py-4 text-left text-slate-950 shadow-lg shadow-orange-500/20 ring-1 ring-white/10">
-              <p className="text-sm font-extrabold uppercase tracking-[0.24em] text-slate-950">Hello</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">{employeeName}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-950">{checkedInText}</p>
-              {checkedOutAt && <p className="mt-1 text-sm font-semibold text-slate-950">{checkedOutText}</p>}
+
+            <div className="mx-auto flex w-full min-w-[220px] max-w-[220px] flex-col items-center justify-center rounded-3xl border border-slate-800 bg-slate-950 px-5 py-4 text-center shadow-2xl shadow-slate-950/30 ring-1 ring-white/10">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Duration</p>
+              <p className="mt-4 text-3xl font-semibold text-white font-mono leading-tight">{totalDutyLabel}</p>
+              <p className="mt-2 text-sm text-slate-400">{checkedInAt ? (hasCheckedOut ? 'Work completed' : '') : 'Not checked in'}</p>
+            </div>
+
+            <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-yellow-300 via-sky-500 to-orange-400 p-4 text-slate-950 shadow-lg shadow-orange-500/20 ring-1 ring-white/10 lg:max-w-[260px]">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-950">Hello</p>
+              <p className="mt-2 text-xl font-black text-slate-950">{employeeName}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-950">{checkedInText}</p>
+              {checkedOutAt && <p className="mt-1 text-xs font-semibold text-slate-950">{checkedOutText}</p>}
             </div>
           </div>
 
@@ -370,6 +388,7 @@ const Dashboard = () => {
                 <p className="mt-3 text-sm text-amber-300">Scrum report is recommended before checkout.</p>
               )}
             </section>
+
           </div>
 
           <section className="mt-6 rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/30">

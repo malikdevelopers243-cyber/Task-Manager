@@ -53,6 +53,33 @@ const formatBreakDuration = (seconds) => {
   return remaining ? `${minutes}m ${remaining}s` : `${minutes}m`
 }
 
+const getDurationSeconds = (record, now) => {
+  const checkIn = parseDateValue(record.checkIn)
+  if (!checkIn) return 0
+  const end = record.checkOut ? parseDateValue(record.checkOut) : now
+  if (!end) return 0
+
+  const breakSeconds = Array.isArray(record.breaks)
+    ? record.breaks.reduce((sum, item) => {
+        const breakStart = parseDateValue(item.start)
+        const breakEnd = parseDateValue(item.end)
+        if (breakStart && breakEnd) {
+          return sum + Math.max(0, Math.round((breakEnd - breakStart) / 1000))
+        }
+        return sum
+      }, 0)
+    : 0
+
+  return Math.max(0, Math.round((end - checkIn) / 1000) - breakSeconds)
+}
+
+const formatDurationHHMMSS = (seconds) => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 const getRecordDate = (record) => {
   return parseDateValue(record?.date)
 }
@@ -68,6 +95,12 @@ const Attendance = () => {
   const [attendance, setAttendance] = useState([])
   const [monthFilter, setMonthFilter] = useState(new Date().getMonth())
   const [loading, setLoading] = useState(true)
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const loadAttendance = async () => {
@@ -98,9 +131,10 @@ const Attendance = () => {
 
   const summary = useMemo(() => {
     const presentDays = filteredAttendance.filter((record) => record.status === 'present').length
-    const totalHours = filteredAttendance.reduce((sum, record) => sum + (record.totalHours || 0), 0)
-    return { presentDays, totalHours: totalHours.toFixed(2) }
-  }, [filteredAttendance])
+    const totalHoursSeconds = filteredAttendance.reduce((sum, record) => sum + getDurationSeconds(record, now), 0)
+    const totalHoursDecimal = (totalHoursSeconds / 3600).toFixed(2)
+    return { presentDays, totalHours: totalHoursDecimal }
+  }, [filteredAttendance, now])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -184,7 +218,9 @@ const Attendance = () => {
                           <td className="px-6 py-4 text-slate-100">{checkIn ? formatTime(checkIn) : '-'}</td>
                           <td className="px-6 py-4 text-slate-100">{checkOut ? formatTime(checkOut) : '-'}</td>
                           <td className="px-6 py-4 text-slate-100">{formattedBreakTime}</td>
-                          <td className="px-6 py-4 text-slate-100">{record.totalHours ?? '-'}</td>
+                          <td className="px-6 py-4 text-slate-100">
+                            {formatDurationHHMMSS(getDurationSeconds(record, now))}
+                          </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
                               {record.status || 'absent'}
