@@ -6,14 +6,6 @@ import MobileSidebar from '../../components/shared/MobileSidebar'
 import { useAuth } from '../../hooks/useAuth'
 import { getAttendanceByEmployee, saveAttendance, updateAttendance, saveEODReport } from '../../firebase/firestore'
 
-const formatTime = (date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date)
-}
-
 const formatDate = (date) => {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
@@ -45,10 +37,12 @@ const getLocalDateString = (value) => {
   return `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`
 }
 
-const calculateBreakMinutes = (breaks) => {
+const calculateBreakMilliseconds = (breaks, now = new Date()) => {
   return breaks.reduce((sum, item) => {
-    if (item.start && item.end) {
-      return sum + Math.max(0, item.end.toMillis() - item.start.toMillis())
+    const start = parseFirestoreDate(item.start)
+    const end = item.end ? parseFirestoreDate(item.end) : now
+    if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      return sum + Math.max(0, end.getTime() - start.getTime())
     }
     return sum
   }, 0)
@@ -59,14 +53,30 @@ const parseFirestoreDate = (value) => {
   if (value instanceof Date) return value
   if (typeof value.toDate === 'function') return value.toDate()
   if (typeof value.seconds === 'number') return new Date(value.seconds * 1000)
-  return new Date(value)
+  const result = new Date(value)
+  return Number.isNaN(result.getTime()) ? null : result
+}
+
+const formatTime = (date) => {
+  const parsed = parseFirestoreDate(date)
+  if (!parsed) return '-'
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(parsed)
 }
 
 const formatDuration = (ms) => {
-  const minutes = Math.round(ms / 60000)
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  return `${hours}h ${remainingMinutes}m`
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const parts = []
+  if (hours) parts.push(`${hours}h`)
+  if (minutes) parts.push(`${minutes}m`)
+  if (seconds || parts.length === 0) parts.push(`${seconds}s`)
+  return parts.join(' ')
 }
 
 const formatTimeSpan = (ms) => {
@@ -126,18 +136,21 @@ const Dashboard = () => {
         }
 
         if (todayRecord) {
+          const normalizedBreaks = Array.isArray(todayRecord.breaks)
+            ? todayRecord.breaks.map((item) => ({
+                start: parseFirestoreDate(item.start),
+                end: parseFirestoreDate(item.end),
+              }))
+            : []
+
+          const ongoingBreak = normalizedBreaks.find((item) => item.start && !item.end)
+
           setAttendance(todayRecord)
           setAttendanceId(todayRecord.id)
           setCheckedInAt(parseFirestoreDate(todayRecord.checkIn))
           setCheckedOutAt(parseFirestoreDate(todayRecord.checkOut))
-          setBreaks(
-            Array.isArray(todayRecord.breaks)
-              ? todayRecord.breaks.map((item) => ({
-                  start: parseFirestoreDate(item.start),
-                  end: parseFirestoreDate(item.end),
-                }))
-              : [],
-          )
+          setBreaks(normalizedBreaks)
+          setActiveBreakStart(ongoingBreak ? ongoingBreak.start : null)
           setScrumSubmitted(Boolean(todayRecord.scrumSubmitted))
         } else {
           setAttendance(null)
@@ -199,29 +212,47 @@ const Dashboard = () => {
     }
   }
 
-  const handleStartBreak = () => {
-    if (!canTakeBreak) return
-    setActiveBreakStart(new Date())
+  const handleStartBreak = async () => {
+    if (!canTakeBreak || !attendanceId || attendanceId === 'pending') return
+    const breakStart = new Date()
+    const nextBreaks = [...breaks, { start: breakStart, end: null }]
+
+    setBreaks(nextBreaks)
+    setActiveBreakStart(breakStart)
     toast.success('Break started.')
-  }
-
-  const handleEndBreak = async () => {
-    if (!activeBreakStart || !attendanceId) return
-    setSavingBreak(true)
-    const breakEnd = new Date()
-    const newBreak = { start: activeBreakStart, end: breakEnd }
-    const updatedBreaks = [...breaks, newBreak]
-
-    setBreaks(updatedBreaks)
-    setActiveBreakStart(null)
-    toast.success(`Break ended (${formatDuration(breakEnd - activeBreakStart)})`)
 
     try {
       await updateAttendance(attendanceId, {
-        breaks: updatedBreaks.map((item) => ({
-          start: item.start,
-          end: item.end,
-        })),
+        breaks: nextBreaks.map((item) => ({ start: item.start, end: item.end })),
+      })
+    } catch (error) {
+      setBreaks(breaks)
+      setActiveBreakStart(null)
+      toast.error('Unable to start break.')
+    }
+  }
+
+  const handleEndBreak = async () => {
+    if (!attendanceId) return
+    const breakEnd = new Date()
+    const updatedBreaks = [...breaks]
+    const lastIndex = updatedBreaks.findIndex((item) => item.start && !item.end)
+    if (lastIndex === -1) return
+
+    const breakStart = updatedBreaks[lastIndex].start
+    updatedBreaks[lastIndex] = {
+      ...updatedBreaks[lastIndex],
+      end: breakEnd,
+    }
+
+    setBreaks(updatedBreaks)
+    setActiveBreakStart(null)
+    setSavingBreak(true)
+    toast.success(`Break ended (${formatDuration(breakEnd - breakStart)})`)
+
+    try {
+      await updateAttendance(attendanceId, {
+        breaks: updatedBreaks.map((item) => ({ start: item.start, end: item.end })),
       })
     } catch (error) {
       setBreaks(breaks)
@@ -268,16 +299,16 @@ const Dashboard = () => {
   const handleCheckout = async () => {
     if (!attendanceId || !checkedInAt) return
     const checkOutTime = new Date()
-    const totalDuration = checkOutTime - checkedInAt
-    const breakDurationMs = calculateBreakMinutes(
-      breaks.map((item) => ({
-        start: { toMillis: () => item.start?.getTime() || 0 },
-        end: { toMillis: () => item.end?.getTime() || 0 },
-      })),
+    const completedBreaks = breaks.map((item) =>
+      item.start && !item.end ? { ...item, end: checkOutTime } : item,
     )
+    const totalDuration = checkOutTime - checkedInAt
+    const breakDurationMs = calculateBreakMilliseconds(completedBreaks, checkOutTime)
     const totalHours = Number(((totalDuration - breakDurationMs) / 3600000).toFixed(2))
 
     setCheckedOutAt(checkOutTime)
+    setBreaks(completedBreaks)
+    setActiveBreakStart(null)
     setSavingCheckout(true)
     toast.success(`Checked out at ${formatTime(checkOutTime)}`)
 
@@ -285,6 +316,7 @@ const Dashboard = () => {
       await updateAttendance(attendanceId, {
         checkOut: checkOutTime,
         totalHours,
+        breaks: completedBreaks.map((item) => ({ start: item.start, end: item.end })),
       })
     } catch (error) {
       setCheckedOutAt(null)
@@ -295,7 +327,10 @@ const Dashboard = () => {
   }
 
   const totalDutyMs = checkedInAt ? (checkedOutAt ? checkedOutAt - checkedInAt : now - checkedInAt) : 0
-  const totalDutyLabel = checkedInAt ? formatTimeSpan(totalDutyMs) : '00:00:00'
+  const totalBreakMs = calculateBreakMilliseconds(breaks, now)
+  const netWorkMs = Math.max(0, totalDutyMs - totalBreakMs)
+  const totalDutyLabel = checkedInAt ? formatTimeSpan(netWorkMs) : '00:00:00'
+  const totalBreakLabel = formatDuration(totalBreakMs)
   const checkedInText = checkedInAt ? `Checked in at ${formatTime(checkedInAt)}` : 'Not checked in yet'
   const checkedOutText = checkedOutAt ? `Checked out at ${formatTime(checkedOutAt)}` : ''
 
@@ -319,9 +354,9 @@ const Dashboard = () => {
             </div>
 
             <div className="mx-auto flex w-full min-w-[220px] max-w-[220px] flex-col items-center justify-center rounded-3xl border border-slate-800 bg-slate-950 px-5 py-4 text-center shadow-2xl shadow-slate-950/30 ring-1 ring-white/10">
-              <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Duration</p>
-              <p className="mt-4 text-3xl font-semibold text-white font-mono leading-tight">{totalDutyLabel}</p>
-              <p className="mt-2 text-sm text-slate-400">{checkedInAt ? (hasCheckedOut ? 'Work completed' : '') : 'Not checked in'}</p>
+                <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Work time</p>
+                <p className="mt-4 text-3xl font-semibold text-white font-mono leading-tight">{totalDutyLabel}</p>
+                <p className="mt-1 text-sm text-slate-400">Breaks: {totalBreakLabel}</p>
             </div>
 
             <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-yellow-300 via-sky-500 to-orange-400 p-4 text-slate-950 shadow-lg shadow-orange-500/20 ring-1 ring-white/10 lg:max-w-[260px]">
@@ -350,24 +385,38 @@ const Dashboard = () => {
               <p className="mt-2 text-sm text-slate-400">Track your break time while you work.</p>
               <button
                 onClick={activeBreakStart ? handleEndBreak : handleStartBreak}
-                disabled={!canTakeBreak || savingBreak}
+                disabled={!canTakeBreak || savingBreak || checkingIn}
                 className="mt-6 w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {activeBreakStart ? (savingBreak ? 'Ending break...' : 'End Break') : 'Start Break'}
+                {activeBreakStart ? (savingBreak ? 'Ending break...' : 'End Break') : checkingIn ? 'Preparing...' : 'Start Break'}
               </button>
               <div className="mt-4 space-y-2 text-sm text-slate-300">
-                {activeBreakStart && <p>Break started at {formatTime(activeBreakStart)}</p>}
+                {activeBreakStart && (
+                  <p>
+                    Break started at {formatTime(activeBreakStart)} · running for {formatDuration(now - activeBreakStart)}
+                  </p>
+                )}
                 {breaks.length > 0 && (
                   <div>
                     <p className="font-semibold text-white">Break history</p>
-                    <ul className="mt-2 space-y-1">
-                      {breaks.map((item, index) => (
-                        <li key={index} className="rounded-2xl bg-slate-800 px-3 py-2 text-slate-100">
-                          <span>Break {index + 1}: </span>
-                          <span>{formatTime(item.start)} - {formatTime(item.end)}</span>
-                          <span className="text-slate-400"> ({formatDuration(item.end - item.start)})</span>
-                        </li>
-                      ))}
+                    <div className="mt-3 rounded-3xl border border-slate-700 bg-slate-950/80 p-3 text-xs text-slate-400">
+                      Total break time: {formatDuration(calculateBreakMilliseconds(breaks))}
+                    </div>
+                    <ul className="mt-3 space-y-1">
+                      {breaks.map((item, index) => {
+                        const breakStart = item.start
+                        const breakEnd = item.end || now
+                        const duration = breakStart ? Math.max(0, breakEnd.getTime() - breakStart.getTime()) : 0
+                        return (
+                          <li key={index} className="rounded-2xl bg-slate-800 px-3 py-2 text-slate-100">
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Break {index + 1}</div>
+                            <div className="mt-1 text-sm">
+                              <span>{breakStart ? formatTime(breakStart) : '-'}</span> - <span>{item.end ? formatTime(breakEnd) : 'Ongoing'}</span>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-400">Duration {formatDuration(duration)}</div>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 )}
