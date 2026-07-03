@@ -25,5 +25,15 @@
     "status": "present",
     "breaks": [],
     "totalHours": 0
+  },
+  {
+    "id": "1783056994084",
+    "employeeId": "1783001246758",
+    "employeeName": "employe 1",
+    "date": "2026-07-03",
+    "checkIn": "2026-07-03T05:36:34.075Z",
+    "status": "present",
+    "breaks": [],
+    "totalHours": 0
   }
 ]

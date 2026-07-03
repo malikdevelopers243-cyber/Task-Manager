@@ -52,19 +52,6 @@
     "joiningDate": "2026-07-02"
   },
   {
-    "id": "1782976283121",
-    "username": "one",
-    "name": "One",
-    "email": "one@gmail.com",
-    "password": "$2a$10$7236.pzhOq19hnWdms68DeKNCr2p9aHKwTswMxsfS/4rtVebiNza2",
-    "role": "employee",
-    "department": "Engineering",
-    "contact": "03014166594",
-    "profilePicture": null,
-    "isActive": true,
-    "joiningDate": "2026-07-02"
-  },
-  {
     "id": "1782977061945",
     "username": "backendtester1782977061678",
     "name": "Backend Tester",
@@ -78,16 +65,55 @@
     "joiningDate": "2026-07-02"
   },
   {
-    "id": "1782991438982",
-    "username": "two",
-    "name": "Two",
-    "email": "two@gmail.com",
-    "password": "$2a$10$sP4qYW47pbiCTF7fjyi8/.k0Ef.TVpENCtq8kqhWnH1bV0/5i15OW",
-    "role": "employee",
-    "department": "Engineering",
-    "contact": "0301-1234678",
+    "id": "1783001076154",
+    "username": "talha-qazi",
+    "name": "Qazi Talha",
+    "email": "talha@gmail.com",
+    "password": "$2a$10$dfdyuhyOeBZuaXt1yKg4ueeeUIoxt5WU9Y0zNDA8Vc.akDJkxTv6G",
+    "role": "admin",
+    "department": "Admin",
+    "contact": "",
     "profilePicture": null,
     "isActive": true,
     "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1783001246758",
+    "username": "employe1",
+    "name": "Malik",
+    "email": "employe1@gmail.com",
+    "password": "$2a$10$.I9LNKuf0CqmX6U93jFdXumgmT8qlrzt3g4GXM34G.w27xPcgrQBy",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "0300-1234567",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-02"
+  },
+  {
+    "id": "1783056962494",
+    "username": "asad021",
+    "name": "Asad Malik",
+    "email": "am4355187@gmail.com",
+    "password": "$2a$10$LYr2mg/oBLeAVxy/Gftn3eX1l4PNaZaQnYv7ahTKmNbTEqPbksSwm",
+    "role": "admin",
+    "department": "admin",
+    "contact": "",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-03"
+  },
+  {
+    "id": "1783060990151",
+    "username": "backendtester1783060989872",
+    "name": "Backend Tester",
+    "email": "backendtester+1783060989862@example.com",
+    "password": "$2a$10$8ZwyF4eMcBgrr.Ze9n6kKeeqx9IjpE07lpDRxEylDiwoWQzxrdWcq",
+    "role": "employee",
+    "department": "Engineering",
+    "contact": "1234567890",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-03"
   }
 ]
