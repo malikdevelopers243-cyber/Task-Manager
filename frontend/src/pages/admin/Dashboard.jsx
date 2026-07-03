@@ -25,12 +25,18 @@ const formatTime = (time) => {
   return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date)
 }
 
-const getBreakSeconds = (breaks) => {
+const getBreakSeconds = (breaks, now = new Date()) => {
   if (!Array.isArray(breaks)) return 0
   return breaks.reduce((sum, item) => {
     if (!item) return sum
     const start = item.start instanceof Date ? item.start : typeof item?.toDate === 'function' ? item.toDate() : item.start ? new Date(item.start) : null
-    const end = item.end instanceof Date ? item.end : typeof item?.toDate === 'function' ? item.toDate() : item.end ? new Date(item.end) : null
+    const end = item.end instanceof Date
+      ? item.end
+      : typeof item?.toDate === 'function'
+      ? item.toDate()
+      : item.end
+      ? new Date(item.end)
+      : now
     if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
       return sum + Math.max(0, Math.round((end - start) / 1000))
     }
@@ -63,7 +69,7 @@ const formatDurationHHMMSS = (seconds) => {
 }
 
 const formatBreakDuration = (seconds) => {
-  if (!seconds) return '-'
+  if (!seconds && seconds !== 0) return '-'
   if (seconds < 60) return `${seconds}s`
   const minutes = Math.floor(seconds / 60)
   const remaining = seconds % 60
@@ -195,7 +201,26 @@ const Dashboard = () => {
                         <td className="px-6 py-4 text-slate-100">{record.employeeName}</td>
                         <td className="px-6 py-4 text-slate-100">{formatTime(record.checkIn)}</td>
                         <td className="px-6 py-4 text-slate-100">{formatTime(record.checkOut)}</td>
-                        <td className="px-6 py-4 text-slate-100">{formatBreakDuration(getBreakSeconds(record.breaks))}</td>
+                        <td className="px-6 py-4 text-slate-100">
+                          {Array.isArray(record.breaks) && record.breaks.length > 0 ? (
+                            <div className="space-y-3">
+                              {record.breaks.map((item, index) => (
+                                <div key={index} className="rounded-2xl bg-slate-900 px-3 py-2 text-slate-100">
+                                  <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Break {index + 1}</div>
+                                  <div className="mt-1 text-sm">
+                                    <span>{formatTime(item.start)}</span> - <span>{item.end ? formatTime(item.end) : 'Ongoing'}</span>
+                                  </div>
+                                  <div className="mt-1 text-xs text-slate-400">Total {formatBreakDuration(getBreakSeconds([item]))}</div>
+                                </div>
+                              ))}
+                              <div className="rounded-2xl border border-slate-700 bg-slate-950/90 px-3 py-2 text-xs text-slate-400">
+                                Total break time: {formatBreakDuration(getBreakSeconds(record.breaks, now))}
+                              </div>
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-slate-100">{formatDurationHHMMSS(getDurationSeconds(record, now))}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">

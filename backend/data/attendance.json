@@ -33,7 +33,12 @@
     "date": "2026-07-03",
     "checkIn": "2026-07-03T05:36:34.075Z",
     "status": "present",
-    "breaks": [],
+    "breaks": [
+      {
+        "start": "2026-07-03T10:03:22.661Z",
+        "end": null
+      }
+    ],
     "totalHours": 0
   }
 ]

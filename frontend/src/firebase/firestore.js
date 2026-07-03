@@ -73,8 +73,10 @@ export const onAttendanceByDate = (date, callback) => {
   }
 
   load()
+  const interval = setInterval(load, 5000)
   return () => {
     cancelled = true
+    clearInterval(interval)
   }
 }
 
