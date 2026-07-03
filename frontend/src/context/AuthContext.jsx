@@ -7,7 +7,7 @@ const LOCAL_STORAGE_USERS_KEY = 'office-management-users'
 const EMPLOYEES_STORAGE_KEY = 'employees'
 const PROFILE_PICTURES_KEY = 'office-management-profile-pictures'
 const TOKEN_STORAGE_KEY = 'office-management-token'
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 const loadStoredUsers = () => {
   const raw = localStorage.getItem(LOCAL_STORAGE_USERS_KEY)
