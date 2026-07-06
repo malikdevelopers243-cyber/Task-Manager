@@ -269,8 +269,21 @@ app.delete('/api/users/:id', authenticateToken, async (req, res) => {
     return res.status(404).json({ message: 'User not found.' })
   }
 
+  // Remove the user and cascade-delete related attendance and reports
+  const deletedUserId = req.params.id
   setUsers(nextUsers)
-  res.json({ message: 'User deleted.' })
+
+  // Remove attendance records for the deleted user
+  const attendance = getAttendance()
+  const nextAttendance = attendance.filter((entry) => String(entry.employeeId) !== String(deletedUserId))
+  setAttendance(nextAttendance)
+
+  // Remove EOD reports for the deleted user
+  const reports = getReports()
+  const nextReports = reports.filter((report) => String(report.employeeId) !== String(deletedUserId))
+  setReports(nextReports)
+
+  res.json({ message: 'User and related data deleted.' })
 })
 
 app.get('/api/attendance', authenticateToken, (req, res) => {
