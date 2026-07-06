@@ -136,6 +136,33 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user))
         setCurrentUser(user)
         setUserRole(user.role)
+        // Fetch users from backend so admin sees latest users
+        try {
+          const usersResp = await apiRequest('/api/users')
+          const usersList = usersResp.users || usersResp || []
+          setStoredUsers(usersList)
+          saveStoredUsers(usersList)
+
+          try {
+            const employeesOnly = (Array.isArray(usersList) ? usersList.filter((u) => u.role === 'employee') : []).map((u) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              password: '********',
+              department: u.department || '',
+              role: u.role || 'employee',
+              contact: u.contact || '',
+              isActive: u.isActive !== false,
+              joiningDate: u.joiningDate || '',
+            }))
+            localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(employeesOnly))
+            setEmployeeUsers(loadEmployeeUsers())
+          } catch (e) {
+            // ignore local storage errors
+          }
+        } catch (e) {
+          // ignore failure to fetch users
+        }
       } catch {
         localStorage.removeItem(TOKEN_STORAGE_KEY)
         localStorage.removeItem(LOCAL_STORAGE_KEY)
