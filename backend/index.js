@@ -345,11 +345,16 @@ app.get('/api/eod-reports', authenticateToken, (req, res) => {
     reports = reports.filter((report) => (report.date || '') <= to)
   }
 
+  // Only return reports that belong to existing users to avoid showing orphaned reports
+  const users = getUsers()
+  const validUserIds = new Set((Array.isArray(users) ? users.map((u) => String(u.id)) : []))
+  reports = reports.filter((report) => validUserIds.has(String(report.employeeId)))
+
   if (req.user.role === 'admin' || req.user.role === 'superadmin') {
     return res.json({ reports })
   }
 
-  res.json({ reports: reports.filter((report) => report.employeeId === req.user.id) })
+  res.json({ reports: reports.filter((report) => String(report.employeeId) === String(req.user.id)) })
 })
 
 app.post('/api/eod-reports', authenticateToken, (req, res) => {
