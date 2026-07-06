@@ -122,16 +122,20 @@ const Dashboard = () => {
 
   const counts = useMemo(() => {
     const validIds = new Set((Array.isArray(employeeUsers) ? employeeUsers.map((e) => String(e.id)) : []))
+    if (validIds.size === 0) {
+      // If employee list is not loaded, don't count attendance to avoid phantom totals
+      return { present: 0, onBreak: 0, checkedOut: 0 }
+    }
     const filtered = todayAttendance.filter((item) => {
       const empId = String(item?.employeeId ?? item?.id ?? '')
-      return validIds.size === 0 ? true : validIds.has(empId)
+      return validIds.has(empId)
     })
     return getStatusCount(filtered)
   }, [todayAttendance, employeeUsers])
 
   const filteredTodayAttendance = useMemo(() => {
     const validIds = new Set((Array.isArray(employeeUsers) ? employeeUsers.map((e) => String(e.id)) : []))
-    if (validIds.size === 0) return todayAttendance
+    if (validIds.size === 0) return []
     return todayAttendance.filter((item) => {
       const empId = String(item?.employeeId ?? item?.id ?? '')
       return validIds.has(empId)
