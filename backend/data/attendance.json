@@ -67,5 +67,20 @@
     "status": "present",
     "breaks": [],
     "totalHours": 0
+  },
+  {
+    "id": "1783323226421",
+    "employeeId": "1783323210239",
+    "employeeName": "Asad Ali",
+    "date": "2026-07-06",
+    "checkIn": "2026-07-06T07:33:46.418Z",
+    "status": "present",
+    "breaks": [
+      {
+        "start": "2026-07-06T09:17:51.101Z",
+        "end": "2026-07-06T09:39:55.483Z"
+      }
+    ],
+    "totalHours": 0
   }
 ]
