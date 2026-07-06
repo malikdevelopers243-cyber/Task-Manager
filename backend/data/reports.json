@@ -8,5 +8,15 @@
     "tomorrow": "nothing",
     "blockers": "nothing",
     "reviewed": true
+  },
+  {
+    "id": "1783316020204",
+    "employeeId": "1783001246758",
+    "employeeName": "Malik",
+    "date": "2026-07-06",
+    "completed": "i have completed the frontend of the website.",
+    "tomorrow": "will continue work on it.",
+    "blockers": "no",
+    "reviewed": true
   }
 ]

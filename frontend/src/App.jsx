@@ -7,6 +7,7 @@ import Signup from './pages/Signup'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminEmployees from './pages/admin/Employees'
 import AdminAttendance from './pages/admin/Attendance'
+import AdminDetails from './pages/admin/Details'
 import AdminEODReports from './pages/admin/EODReports'
 import EmployeeDashboard from './pages/employee/Dashboard'
 import EmployeeAttendance from './pages/employee/Attendance'
@@ -42,6 +43,14 @@ function App() {
             element={
               <ProtectedRoute allowedRole="admin">
                 <AdminAttendance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/details"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminDetails />
               </ProtectedRoute>
             }
           />

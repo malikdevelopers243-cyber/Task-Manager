@@ -350,8 +350,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   const value = useMemo(
-    () => ({ currentUser, userRole, login, loginWithGoogle, logout, register, updateProfilePicture, updateUser, removeUser, loading }),
-    [currentUser, userRole, loading, storedUsers, employeeUsers, profilePictures],
+    () => ({ currentUser, userRole, login, loginWithGoogle, logout, register, updateProfilePicture, updateUser, removeUser, loading, employeeUsers, allUsers }),
+    [currentUser, userRole, loading, storedUsers, employeeUsers, profilePictures, allUsers],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -36,9 +36,37 @@
     "breaks": [
       {
         "start": "2026-07-03T10:03:22.661Z",
-        "end": null
+        "end": "2026-07-03T10:40:19.679Z"
       }
     ],
+    "totalHours": 0,
+    "checkOut": "2026-07-06T05:42:14.424Z"
+  },
+  {
+    "id": "1783315320773",
+    "employeeId": "1783001246758",
+    "employeeName": "Malik",
+    "date": "2026-07-06",
+    "checkIn": "2026-07-06T05:22:00.775Z",
+    "status": "present",
+    "breaks": [
+      {
+        "start": "2026-07-06T05:32:02.908Z",
+        "end": "2026-07-06T05:32:47.589Z"
+      }
+    ],
+    "totalHours": 0.18,
+    "scrumSubmitted": true,
+    "checkOut": "2026-07-06T05:33:43.525Z"
+  },
+  {
+    "id": "1783316195283",
+    "employeeId": "1783316179478",
+    "employeeName": "Mr Malik",
+    "date": "2026-07-06",
+    "checkIn": "2026-07-06T05:36:35.277Z",
+    "status": "present",
+    "breaks": [],
     "totalHours": 0
   }
 ]

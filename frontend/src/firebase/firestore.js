@@ -94,6 +94,11 @@ export const markReportReviewed = async (reportId) => {
   return data.report
 }
 
+export const deleteEODReport = async (reportId) => {
+  const data = await apiRequest(`/api/eod-reports/${reportId}`, { method: 'DELETE' })
+  return data
+}
+
 export const getUser = async () => null
 
 export const saveAttendance = async (attendanceData) => {

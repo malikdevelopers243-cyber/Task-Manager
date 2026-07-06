@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { getAllUsers, getEODReports, markReportReviewed } from '../../firebase/firestore'
+import { getAllUsers, getEODReports, markReportReviewed, deleteEODReport } from '../../firebase/firestore'
 import Navbar from '../../components/shared/Navbar'
 import AdminSidebar from '../../components/shared/AdminSidebar'
 import MobileSidebar from '../../components/shared/MobileSidebar'
 import EmptyState from '../../components/shared/EmptyState'
 import SkeletonRow from '../../components/shared/SkeletonRow'
+import EODViewer from '../../components/admin/EODViewer'
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -48,6 +49,47 @@ const EODReports = () => {
       toast.error('Unable to update report status.')
     }
   }
+
+  const handleRemove = async (reportId) => {
+    const toRemove = reports.find((r) => r.id === reportId)
+    if (!toRemove) return
+    setConfirmRemoveReport(toRemove)
+    setConfirmRemoveOpen(true)
+  }
+
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+  const [confirmRemoveReport, setConfirmRemoveReport] = useState(null)
+
+  const confirmRemove = async () => {
+    if (!confirmRemoveReport) return
+    const id = confirmRemoveReport.id
+    try {
+      await deleteEODReport(id)
+      setReports((prev) => prev.filter((r) => r.id !== id))
+      toast.success('Report removed.')
+    } catch (error) {
+      // Still remove from UI to reflect admin action, but inform user
+      setReports((prev) => prev.filter((r) => r.id !== id))
+      toast.success('Report removed (local).')
+      toast.error('Failed to remove report from server.')
+    } finally {
+      setConfirmRemoveOpen(false)
+      setConfirmRemoveReport(null)
+    }
+  }
+
+  const cancelRemove = () => {
+    setConfirmRemoveOpen(false)
+    setConfirmRemoveReport(null)
+  }
+
+  const [selectedReport, setSelectedReport] = useState(null)
+
+  const openReport = (report) => {
+    setSelectedReport(report)
+  }
+
+  const closeReport = () => setSelectedReport(null)
 
   const totalReports = reports.length
   const reviewedCount = reports.filter((report) => report.reviewed).length
@@ -147,7 +189,13 @@ const EODReports = () => {
                     </tr>
                   ) : (
                     reports.map((report) => (
-                      <tr key={report.id}>
+                      <tr
+                        key={report.id}
+                        onClick={() => openReport(report)}
+                        role="button"
+                        tabIndex={0}
+                        className="cursor-pointer hover:bg-slate-900"
+                      >
                         <td className="px-6 py-4 text-slate-200">{report.employeeName}</td>
                         <td className="px-6 py-4 text-slate-200">{formatDate(report.date)}</td>
                         <td className="px-6 py-4 text-slate-200 max-w-[240px] truncate">{report.completed || '—'}</td>
@@ -164,14 +212,29 @@ const EODReports = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button
-                            type="button"
-                            onClick={() => handleReviewed(report.id)}
-                            disabled={report.reviewed}
-                            className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-100 transition hover:bg-slate-700 disabled:opacity-50"
-                          >
-                            Mark reviewed
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReviewed(report.id)
+                              }}
+                              disabled={report.reviewed}
+                              className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-100 transition hover:bg-slate-700 disabled:opacity-50"
+                            >
+                              Mark reviewed
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRemove(report.id)
+                              }}
+                              className="inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-500"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -180,6 +243,22 @@ const EODReports = () => {
               </table>
             </div>
           </div>
+          {selectedReport && (
+            <EODViewer report={selectedReport} onClose={closeReport} onMarkReviewed={(id) => { handleReviewed(id); closeReport(); }} />
+          )}
+          {confirmRemoveOpen && confirmRemoveReport && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/60" onClick={cancelRemove} />
+              <div className="relative w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-950 p-6 text-slate-100 shadow-2xl">
+                <h3 className="text-lg font-semibold">Remove Report</h3>
+                <p className="mt-2 text-sm text-slate-300">Are you sure you want to remove this report? This action cannot be undone.</p>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button onClick={cancelRemove} className="rounded-2xl bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-600">No</button>
+                  <button onClick={confirmRemove} className="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500">Yes, remove</button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>

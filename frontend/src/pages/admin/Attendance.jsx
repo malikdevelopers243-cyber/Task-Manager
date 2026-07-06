@@ -5,8 +5,8 @@ import MobileSidebar from '../../components/shared/MobileSidebar'
 import EmptyState from '../../components/shared/EmptyState'
 import SkeletonRow from '../../components/shared/SkeletonRow'
 import { getAttendanceByDate } from '../../firebase/firestore'
+import { useAuth } from '../../hooks/useAuth'
 
-const EMPLOYEES_STORAGE_KEY = 'employees'
 const ATTENDANCE_STORAGE_KEY = 'attendance'
 
 const parseDateValue = (value) => {
@@ -71,16 +71,6 @@ const getStatusBadge = (status) => {
   return 'bg-slate-700 text-slate-100'
 }
 
-const loadEmployees = () => {
-  const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
-  if (!raw) return []
-  try {
-    return JSON.parse(raw)
-  } catch {
-    localStorage.removeItem(EMPLOYEES_STORAGE_KEY)
-    return []
-  }
-}
 
 const loadAttendance = () => {
   const raw = localStorage.getItem(ATTENDANCE_STORAGE_KEY)
@@ -101,6 +91,8 @@ const Attendance = () => {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
+  const { employeeUsers } = useAuth()
+
   useEffect(() => {
     setLoading(true)
     const location = window.location
@@ -109,9 +101,9 @@ const Attendance = () => {
       const employeeParam = params.get('employee')
       if (employeeParam) setSearch(employeeParam)
     } catch (e) {}
-    const todayEmployees = loadEmployees()
-    setEmployees(todayEmployees)
-  }, [])
+    setEmployees(Array.isArray(employeeUsers) ? employeeUsers : [])
+    setLoading(false)
+  }, [employeeUsers])
 
   useEffect(() => {
     const loadAttendanceData = async () => {

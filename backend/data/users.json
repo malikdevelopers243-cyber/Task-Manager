@@ -115,5 +115,31 @@
     "profilePicture": null,
     "isActive": true,
     "joiningDate": "2026-07-03"
+  },
+  {
+    "id": "1783316179478",
+    "username": "malik",
+    "name": "Mr Malik",
+    "email": "malik@gmail.com",
+    "password": "$2a$10$086fMLnb8Z30Op3kxxH8C.ZGNhopdLmya/29vU9T8kPsAnHqNm6qG",
+    "role": "manager",
+    "department": "Engineering",
+    "contact": "0300-0000000",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-06"
+  },
+  {
+    "id": "1783316936868",
+    "username": "asad0421",
+    "name": "Asad Malik",
+    "email": "asad@gmail.com",
+    "password": "$2a$10$DbcFZmo48Qp/7U7q2Xc/cuo9dUODl37RQ14IA/3RghjD6/1Q1dk6S",
+    "role": "admin",
+    "department": "admin",
+    "contact": "",
+    "profilePicture": null,
+    "isActive": true,
+    "joiningDate": "2026-07-06"
   }
 ]

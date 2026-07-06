@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../hooks/useAuth'
-import { getAttendanceByEmployee } from '../../firebase/firestore'
+import { getAttendanceByEmployee, updateAttendance } from '../../firebase/firestore'
 import Navbar from '../../components/shared/Navbar'
 import Sidebar from '../../components/shared/Sidebar'
 import MobileSidebar from '../../components/shared/MobileSidebar'
@@ -129,12 +129,32 @@ const Attendance = () => {
     })
   }, [attendance, monthFilter])
 
+  const [checkingOutId, setCheckingOutId] = useState(null)
+
   const summary = useMemo(() => {
     const presentDays = filteredAttendance.filter((record) => record.status === 'present').length
     const totalHoursSeconds = filteredAttendance.reduce((sum, record) => sum + getDurationSeconds(record, now), 0)
     const totalHoursDecimal = (totalHoursSeconds / 3600).toFixed(2)
     return { presentDays, totalHours: totalHoursDecimal }
   }, [filteredAttendance, now])
+
+  const handleLiveCheckout = async (record) => {
+    if (!record?.id) return
+    setCheckingOutId(record.id)
+    try {
+      const checkOutTime = new Date()
+      await updateAttendance(record.id, { checkOut: checkOutTime })
+      const updatedRecords = attendance.map((item) =>
+        item.id === record.id ? { ...item, checkOut: checkOutTime } : item
+      )
+      setAttendance(updatedRecords)
+      toast.success(`Checked out ${formatDate(record.date)} at ${formatTime(checkOutTime)}`)
+    } catch (error) {
+      toast.error('Unable to complete live checkout.')
+    } finally {
+      setCheckingOutId(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -212,6 +232,7 @@ const Attendance = () => {
                           }, 0)
                         : 0
                       const formattedBreakTime = formatBreakDuration(breakTime)
+                      const isLive = !checkOut && checkIn
                       return (
                         <tr key={record.id} className="hover:bg-slate-900/70">
                           <td className="px-6 py-4 text-slate-100">{formatDate(record.date)}</td>
@@ -222,9 +243,21 @@ const Attendance = () => {
                             {formatDurationHHMMSS(getDurationSeconds(record, now))}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
-                              {record.status || 'absent'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(record.status)}`}>
+                                {record.status || 'absent'}
+                              </span>
+                              {isLive && (
+                                <button
+                                  type="button"
+                                  disabled={checkingOutId === record.id}
+                                  onClick={() => handleLiveCheckout(record)}
+                                  className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {checkingOutId === record.id ? 'Checking out...' : 'Live Checkout'}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )

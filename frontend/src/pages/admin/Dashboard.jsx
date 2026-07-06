@@ -91,21 +91,10 @@ const getStatusCount = (attendance) => {
   return { present, onBreak, checkedOut }
 }
 
-const readEmployees = () => {
-  const raw = localStorage.getItem('employees')
-  if (!raw) return []
-  try {
-    const data = JSON.parse(raw)
-    // Filter to only include employees (not admins/managers)
-    return Array.isArray(data) ? data.filter(emp => emp.role === 'employee') : []
-  } catch {
-    localStorage.removeItem('employees')
-    return []
-  }
-}
+// employee list comes from AuthContext (`employeeUsers`)
 
 const Dashboard = () => {
-  const { currentUser } = useAuth()
+  const { currentUser, employeeUsers } = useAuth()
   const [todayAttendance, setTodayAttendance] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalEmployees, setTotalEmployees] = useState(0)
@@ -113,8 +102,8 @@ const Dashboard = () => {
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    setTotalEmployees(readEmployees().length)
-  }, [])
+    setTotalEmployees(Array.isArray(employeeUsers) ? employeeUsers.filter(emp => emp.role === 'employee').length : 0)
+  }, [employeeUsers])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -131,7 +120,23 @@ const Dashboard = () => {
     return () => unsubscribe()
   }, [currentUser, today])
 
-  const counts = useMemo(() => getStatusCount(todayAttendance), [todayAttendance])
+  const counts = useMemo(() => {
+    const validIds = new Set((Array.isArray(employeeUsers) ? employeeUsers.map((e) => String(e.id)) : []))
+    const filtered = todayAttendance.filter((item) => {
+      const empId = String(item?.employeeId ?? item?.id ?? '')
+      return validIds.size === 0 ? true : validIds.has(empId)
+    })
+    return getStatusCount(filtered)
+  }, [todayAttendance, employeeUsers])
+
+  const filteredTodayAttendance = useMemo(() => {
+    const validIds = new Set((Array.isArray(employeeUsers) ? employeeUsers.map((e) => String(e.id)) : []))
+    if (validIds.size === 0) return todayAttendance
+    return todayAttendance.filter((item) => {
+      const empId = String(item?.employeeId ?? item?.id ?? '')
+      return validIds.has(empId)
+    })
+  }, [todayAttendance, employeeUsers])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -143,8 +148,8 @@ const Dashboard = () => {
         <AdminSidebar />
         <main className="flex-1 p-6 md:p-0">
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-white">Admin Dashboard</h2>
-            <p className="mt-2 text-sm text-slate-400">Live attendance overview for today.</p>
+            <h2 className="text-2xl font-semibold text-white"></h2>
+            <p className="mt-2 text-sm text-slate-400"></p>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-4">
@@ -189,14 +194,14 @@ const Dashboard = () => {
                       <SkeletonRow columns={6} />
                       <SkeletonRow columns={6} />
                     </>
-                  ) : todayAttendance.length === 0 ? (
+                  ) : filteredTodayAttendance.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-8">
                         <EmptyState message="No attendance found today." />
                       </td>
                     </tr>
                   ) : (
-                    todayAttendance.map((record) => (
+                    filteredTodayAttendance.map((record) => (
                       <tr key={record.id}>
                         <td className="px-6 py-4 text-slate-100">{record.employeeName}</td>
                         <td className="px-6 py-4 text-slate-100">{formatTime(record.checkIn)}</td>

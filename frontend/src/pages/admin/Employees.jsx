@@ -8,8 +8,6 @@ import EmptyState from '../../components/shared/EmptyState'
 import SkeletonRow from '../../components/shared/SkeletonRow'
 import { useAuth } from '../../hooks/useAuth'
 
-const EMPLOYEES_STORAGE_KEY = 'employees'
-
 const initialForm = {
   name: '',
   email: '',
@@ -19,25 +17,10 @@ const initialForm = {
   contact: '',
 }
 
-const saveEmployees = (employees) => {
-  localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(employees))
-}
-
-const readEmployees = () => {
-  const raw = localStorage.getItem(EMPLOYEES_STORAGE_KEY)
-  if (!raw) return []
-  try {
-    const data = JSON.parse(raw)
-    // Filter to only include employees (not admins/managers)
-    return Array.isArray(data) ? data.filter(emp => emp.role === 'employee') : []
-  } catch {
-    localStorage.removeItem(EMPLOYEES_STORAGE_KEY)
-    return []
-  }
-}
+// Removed localStorage functions to use employeeUsers from AuthContext
 
 const Employees = () => {
-  const { register, updateUser, removeUser } = useAuth()
+  const { register, updateUser, removeUser, employeeUsers } = useAuth()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -50,10 +33,9 @@ const Employees = () => {
 
   useEffect(() => {
     setLoading(true)
-    const stored = readEmployees()
-    setEmployees(stored)
+    setEmployees(Array.isArray(employeeUsers) ? employeeUsers : [])
     setLoading(false)
-  }, [])
+  }, [employeeUsers])
 
   const departments = useMemo(
     () => ['Engineering', 'Marketing', 'HR', 'Sales', 'Other'],
@@ -105,7 +87,6 @@ const Employees = () => {
         const nextEmployees = employees.map((employee) =>
           employee.id === employeeToEdit.id ? { ...employee, ...updates } : employee,
         )
-        saveEmployees(nextEmployees)
         setEmployees(nextEmployees)
         toast.success('Employee updated successfully.')
       } else {
@@ -132,7 +113,6 @@ const Employees = () => {
         }
 
         const nextEmployees = [...employees, newEmployee]
-        saveEmployees(nextEmployees)
         setEmployees(nextEmployees)
         toast.success('Employee added successfully.')
       }
@@ -163,7 +143,6 @@ const Employees = () => {
     const nextEmployees = employees.map((item) =>
       item.id === employee.id ? { ...item, ...updates } : item,
     )
-    saveEmployees(nextEmployees)
     setEmployees(nextEmployees)
     toast.success('Employee status updated.')
   }
@@ -195,7 +174,6 @@ const Employees = () => {
     }
 
     const nextEmployees = employees.filter((item) => item.id !== employeeToRemove.id)
-    saveEmployees(nextEmployees)
     setEmployees(nextEmployees)
     setEmployeeToRemove(null)
     setDeleteConfirmOpen(false)

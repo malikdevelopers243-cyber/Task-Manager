@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 const links = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Employees', to: '/admin/employees', icon: Users },
-  { label: 'Attendance', to: '/admin/attendance', icon: ClipboardList },
+  { label: 'Employee Details', to: '/admin/details', icon: ClipboardList },
   { label: 'EOD Reports', to: '/admin/eod-reports', icon: FileText },
 ]
 
